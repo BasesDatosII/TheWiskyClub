@@ -1,13 +1,14 @@
 CREATE TABLE Country
 (
-	idCountry INT PRIMARY KEY IDENTITY,
+	idCountry INT PRIMARY KEY,
 	countryName VARCHAR(20) NOT NULL
 )
 GO
 
+
 CREATE TABLE InfoEmployee
 (
-	idInfoEmployee INT PRIMARY KEY IDENTITY,
+	idInfoEmployee INT PRIMARY KEY,
 	peopleName VARCHAR(20) NOT NULL,
 	surname VARCHAR(30) NOT NULL,
 	email VARCHAR(50) NOT NULL,
@@ -50,18 +51,18 @@ CREATE TABLE EmployeerUser
 (
 	idEmployeerUser INT PRIMARY KEY IDENTITY,
 	pasword VARCHAR(30) NOT NULL,
-	isActive BIT NOT NULL, --1 = ACTIVE, 0 = NON ACTIVE
+	isActive BIT DEFAULT 1, --1 = ACTIVE, 0 = NON ACTIVE
 )
 GO
 
 CREATE TABLE Employee
 (
-	idEmployee INT PRIMARY KEY IDENTITY,
+	idEmployee INT PRIMARY KEY,
 	idInfoEmployee INT NOT NULL,
 	CONSTRAINT fk_EmployeeInfoEmployee FOREIGN KEY (idInfoEmployee)
 	REFERENCES InfoEmployee(idInfoEmployee),
-	isActive BIT NOT NULL,
-	salary money NOT NULL,
+	isActive BIT DEFAULT 1 NOT NULL,
+	salary money  NOT NULL,
 	idJob INT NOT NULL,
 	CONSTRAINT fk_EmployeeJob FOREIGN KEY (idJob)
 	REFERENCES Job(idJob),

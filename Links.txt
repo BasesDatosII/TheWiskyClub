@@ -1,0 +1,3 @@
+Diagrams: 	https://drive.google.com/file/d/1X1odkrQQeexgEeyohGm67le4r_T92RQx/view?usp=sharing
+
+Repository: git@github.com:BasesDatosII/TheWiskyClub.git

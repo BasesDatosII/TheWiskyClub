@@ -110,7 +110,7 @@ CREATE TABLE InfoPeople
     birthDate DATE NOT NULL
 );
 
-CREATE TABLE Card
+CREATE TABLE CreditCard
 (
 	idCard INT AUTO_INCREMENT, PRIMARY KEY (idCard),
     idInfoPeople INT NOT NULL,

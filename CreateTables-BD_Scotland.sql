@@ -124,7 +124,7 @@ CREATE TABLE CreditCard
 
 CREATE TABLE ClientUser
 (
-	idClientUser INT AUTO_INCREMENT, PRIMARY KEY (idCLientUser),
+	idClientUser INT AUTO_INCREMENT, PRIMARY KEY (idClientUser),
     userPassword VARCHAR(30) NOT NULL,
     isActive BIT NOT NULL #1 = ACTIVE, 0 = NON ACTIVE
 );

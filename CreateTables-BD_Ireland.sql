@@ -75,7 +75,8 @@ CREATE TABLE Product
     CONSTRAINT fk_ProductCash FOREIGN KEY(idCash)
     REFERENCES Cash(idCash),
     isActive BIT NOT NULL, #1 = ACTIVE, 0 = NON ACTIVE
-    entryDate DATE NOT NULL
+    entryDate DATE NOT NULL,
+	tier INT NOT NULL DEFAULT 1
 );
 
 CREATE TABLE PopularProducts

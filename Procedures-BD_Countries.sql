@@ -745,6 +745,130 @@ BEGIN
 END //
 DELIMITER ;
 
+# CRUD Inventory
+
+DELIMITER //
+CREATE PROCEDURE CInventory (IN pIdClub INT, IN pIdProduct INT, IN pStock INT, OUT result VARCHAR(16383))
+BEGIN
+	IF (pIdClub IS NOT NULL AND pIdProduct IS NOT NULL AND pStock IS NOT NULL) THEN
+	BEGIN
+			IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+				BEGIN
+					IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
+						BEGIN
+							IF (pStock > 0) THEN
+								BEGIN
+									INSERT INTO Inventory (idClub, idProduct, stock, isActive) VALUES (pIdClub, pIdProduct, pStock, 1);
+									SET result = "The Inventory has been added";
+								END;
+							ELSE
+								SET result = "The Stock needs to be greater than 0";
+                            END IF;
+						END;
+					ELSE
+						SET result = "The Product ID specified doesn´t exists";
+					END IF;
+				END;               
+			ELSE
+				SET result = "The Club ID specified doesn´t exists";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RInventory (IN pIdInventory INT, IN pIdClub INT, IN pIdProduct INT, IN pStock INT, IN pIsActive BIT)
+BEGIN
+	SELECT idInventory AS 'Inventory ID', idClub AS 'Club ID', idProduct AS 'Product ID',
+		stock AS 'Stock', isActive AS 'Active'
+    FROM Inventory WHERE idInventory = IFNULL(pIdInventory, idInventory) AND idClub = IFNULL(pIdClub, idClub)
+    AND idProduct = IFNULL(pIdProduct, idProduct) AND stock = IFNULL(pStock, stock)
+    AND isActive = IFNULL(pIsActive, isActive);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UInventory (IN pIdInventory INT, IN pIdClub INT, IN pIdProduct INT, IN pStock INT, IN pIsActive BIT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdInventory IS NOT NULL AND (SELECT COUNT(idInventory) FROM Inventory WHERE idInventory = pIdInventory) > 0) THEN
+		BEGIN
+			IF (pIdClub IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+						BEGIN
+							UPDATE Inventory SET idClub = pIdClub WHERE idInventory = pIdInventory;
+							SET result = CONCAT(result, 'The Club ID has been modified\n');
+						END;
+					END IF;
+                END;
+			END IF;
+            IF (pIdProduct IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
+						BEGIN
+							UPDATE Inventory SET idProduct = pIdProduct WHERE idInventory = pIdInventory;
+							SET result = CONCAT(result, 'The Product ID has been modified\n');
+						END;
+					END IF;
+                END;
+			END IF;
+            IF (pStock IS NOT NULL) THEN
+				BEGIN
+					IF (pStock > 0) THEN
+						BEGIN
+							UPDATE Inventory SET stock = pStock WHERE idInventory = pIdInventory;
+							SET result = CONCAT(result, 'The Stock has been modified\n');
+						END;
+					ELSE
+						SET result = "The Stock needs to be greater than 0";
+					END IF;
+                END;
+			END IF;
+            IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
+				BEGIN
+					UPDATE Inventory SET isActive = pIsActive WHERE idInventory = pIdInventory;
+                    SET result = CONCAT(result, 'The Inventory is now active\n');
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Inventory ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DInventory (IN pIdInventory INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idInventory) FROM Inventory WHERE idInventory = pIdInventory) > 0) THEN
+		BEGIN
+			UPDATE Inventory SET isActive = 0 WHERE idInventory = pIdInventory;
+            SET result = "The Inventory is now inactive";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+#################################################
+CALL CInventory(, @result);
+SELECT @result;
+CALL RInventory();
+CALL UInventory(, @result);
+SELECT @result;
+CALL DInventory(,@result);
+SELECT @result;
+SELECT * FROM Inventory;
+#################################################
+
+
 ##################################################################################################
 
 #PRODUCT TYPE

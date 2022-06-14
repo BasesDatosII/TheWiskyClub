@@ -857,17 +857,94 @@ BEGIN
 END //
 DELIMITER ;
 
-#################################################
-CALL CInventory(, @result);
-SELECT @result;
-CALL RInventory();
-CALL UInventory(, @result);
-SELECT @result;
-CALL DInventory(,@result);
-SELECT @result;
-SELECT * FROM Inventory;
-#################################################
+##################################################################################################
+# CRUD ClientUser
+##################################################################################################
 
+DELIMITER //
+CREATE PROCEDURE CClientUser (IN pUserPassword VARCHAR(30), OUT result VARCHAR(16383))
+BEGIN
+	IF (pUserPassword IS NOT NULL) THEN
+	BEGIN
+			##IF () THEN HERE GOES THE VALIDATION OF THE FORMAT
+				BEGIN
+					INSERT INTO ClientUser (userPassword, isActive) VALUES (pUserPassword, 1);
+                    SET result = "The User has been added";
+                END;
+			#ELSE
+			#	SET result = "The User Password format is incorrect";
+			#END IF;
+		END;
+	ELSE
+		SET result = "The User Password can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RClientUser (IN pIdClientUser INT, IN pUserPassword VARCHAR(30), IN pIsActive BIT)
+BEGIN
+	SELECT idClientUser AS 'Client User ID', userPassword AS 'User Password', isActive AS 'Active'
+    FROM ClientUser WHERE idClientUser = IFNULL(pIdClientUser, idClientUser) AND userPassword = IFNULL(pUserPassword, userPassword)
+    AND isActive = IFNULL(pIsActive, isActive);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UClientUser (IN pIdClientUser INT, IN pUserPassword VARCHAR(30), IN pIsActive BIT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdClientUser IS NOT NULL AND (SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+		BEGIN
+			IF (pUserPassword IS NOT NULL) THEN
+				##IF () THEN HERE GOES THE VALIDATION OF THE FORMAT
+					BEGIN
+						UPDATE ClientUser SET userPassword = pUserPassword WHERE idClientUser = pIdClientUser;
+						SET result = "The User has been added";
+					END;
+				#ELSE
+					#SET result = "The User Password format is incorrect";
+				#END IF;
+			END IF;
+            IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
+				BEGIN
+					UPDATE ClientUser SET isActive = pIsActive WHERE idClientUser = pIdClientUser;
+                    SET result = CONCAT(result, 'The Client User is now active\n');
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Client User ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DClientUser (IN pIdClientUser INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+		BEGIN
+			UPDATE ClientUser SET isActive = 0 WHERE idClientUser = pIdClientUser;
+            SET result = "The Client User is now inactive";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+#################################################
+CALL CClientUser("Password", @result);
+SELECT @result;
+CALL RClientUser(NULL,NULL,NULL);
+CALL UClientUser(1,NULL,1, @result);
+SELECT @result;
+CALL DClientUser(1,@result);
+SELECT @result;
+SELECT * FROM ClientUser;
+#################################################
 
 ##################################################################################################
 
@@ -893,7 +970,7 @@ SELECT @result;
 CALL DSupplier(1,@result);
 SELECT @result;
 SELECT * FROM Supplier;
-##################################################################################################
+#################################################
 
 #PRESENTATION
 #################################################
@@ -960,13 +1037,25 @@ SELECT @result;
 SELECT * FROM Club;
 #################################################
 
-
+#INVENTORY
+#################################################
+CALL CInventory(1,1,20, @result);
+SELECT @result;
+CALL RInventory(NULL,NULL,NULL,NULL,NULL);
+CALL UInventory(1,NULL,NULL,30,1, @result);
+SELECT @result;
+CALL DInventory(1,@result);
+SELECT @result;
+SELECT * FROM Inventory;
+#################################################
 
 
 
 ##TEMPLATE
 
+##################################################################################################
 # CRUD 
+##################################################################################################
 
 DELIMITER //
 CREATE PROCEDURE C (, OUT result VARCHAR(16383))
@@ -1002,3 +1091,8 @@ CALL D(,@result);
 SELECT @result;
 SELECT * FROM ;
 #################################################
+
+
+
+#OPEN ORDER
+CREATE PROCEDURE OpenOrder(

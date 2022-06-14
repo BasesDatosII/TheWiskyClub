@@ -586,8 +586,94 @@ SELECT @result;
 SELECT * FROM Product;
 #################################################
 
+# CRUD Location
 
+DELIMITER //
+CREATE PROCEDURE CLocation (IN pLocation GEOMETRY, IN pTypeLocation BIT, OUT result VARCHAR(16383))
+BEGIN
+	IF (pLocation IS NOT NULL AND pTypeLocation IS NOT NULL) THEN
+	BEGIN
+			IF ((SELECT COUNT(idLocation) FROM Location WHERE location = pLocation) = 0) THEN
+				BEGIN
+					INSERT INTO Location (location, typeLocation, isActive) VALUES (pLocation, pTypeLocation, 1);
+                    SET result = "The Location has been added";
+                END;
+			ELSE
+				SET result = "There is already an exact same Location";
+			END IF;
+		END;
+	ELSE
+		SET result = "The Location and TypeLocation can't be NULL";
+    END IF;
+END //
+DELIMITER ;
 
+DELIMITER //
+CREATE PROCEDURE RLocation (IN pIdLocation INT, IN pTypeLocation BIT, IN pIsActive BIT)
+BEGIN
+	SELECT idLocation AS 'Location ID', location AS 'Location', typeLocation AS 'Location Type'
+    FROM Location WHERE idLocation = IFNULL(pIdLocation, idLocation) AND typeLocation = IFNULL(pTypeLocation, typeLocation)
+    AND isActive = IFNULL(pIsActive, isActive);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE ULocation (IN pIdLocation INT, IN pLocation GEOMETRY, IN pTypeLocation BIT, IN pIsActive BIT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdLocation IS NOT NULL AND (SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
+		BEGIN
+			IF (pLocation IS NOT NULL) THEN
+				BEGIN
+					UPDATE Location SET location = pLocation WHERE idLocation = pIdLocation;
+					SET result = CONCAT(result, 'The Location has been modified\n');
+				END;
+			END IF;
+            IF (pTypeLocation IS NOT NULL) THEN
+				BEGIN
+					UPDATE Location SET typeLocation = pTypeLocation WHERE idLocation = pIdLocation;
+					SET result = CONCAT(result, 'The Location Type has been modified\n');
+				END;
+			END IF;
+            IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
+				BEGIN
+					UPDATE Location SET isActive = pIsActive WHERE idLocation = pIdLocation;
+                    SET result = CONCAT(result, 'The Location is now active\n');
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Location ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DLocation (IN pIdLocation INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
+		BEGIN
+			UPDATE Location SET isActive = 0 WHERE idLocation = pIdLocation;
+            SET result = "The Product Type is now inactive";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+#################################################
+CALL CLocation(ST_GeomFromText('POLYGON((0 5, 2 5, 2 7, 0 7, 0 5))'), 1, @result);
+SELECT @result;
+CALL RLocation(NULL, NULL, NULL);
+CALL ULocation(1, NULL, 0, 1, @result);
+SELECT @result;
+CALL DLocation(1,@result);
+SELECT @result;
+SELECT * FROM Location;
+#################################################
 
 
 

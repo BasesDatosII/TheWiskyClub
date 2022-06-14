@@ -1,4 +1,4 @@
-CREATE SCHEMA `BD_UnitedStates` ;
+CREATE DATABASE `BD_UnitedStates` ;
 
 CREATE TABLE Cash
 (
@@ -10,7 +10,8 @@ CREATE TABLE Location
 (
     idLocation INT AUTO_INCREMENT, PRIMARY KEY (idLocation),
     location     GEOMETRY NOT NULL,
-    typeLocation BIT #1 = Club, 0 = ClientLocation
+    typeLocation BIT, #1 = Club, 0 = ClientLocation
+    isActive BIT NOT NULL #1 = ACTIVE, 0 = NON ACTIVE
 );
 
 CREATE TABLE Club

@@ -1,5 +1,6 @@
+##################################################################################################
 # CRUD ProductType
-
+##################################################################################################
 DELIMITER //
 CREATE PROCEDURE CProductType (IN pTypeName varchar(20), OUT result VARCHAR(16383))
 BEGIN
@@ -76,19 +77,9 @@ BEGIN
 END //
 DELIMITER ;
 
-#################################################
-CALL CProductType('Tabaco', @result);
-SELECT @result;
-CALL RProductType(NULL, NULL, NULL);
-CALL UProductType(1, 'Whiskey', 1, @result);
-SELECT @result;
-CALL DProductType(2,@result);
-SELECT @result;
-SELECT * FROM ProductType;
-#################################################
-
+##################################################################################################
 # CRUD Supplier
-
+##################################################################################################
 DELIMITER //
 CREATE PROCEDURE CSupplier (IN pSupplierName VARCHAR(20), OUT result VARCHAR(16383))
 BEGIN
@@ -165,19 +156,9 @@ BEGIN
 END //
 DELIMITER ;
 
-#################################################
-CALL CSupplier('Jackass', @result);
-SELECT @result;
-CALL RSupplier(NULL, NULL, NULL);
-CALL USupplier(1, 'DonOmar', 1, @result);
-SELECT @result;
-CALL DSupplier(1,@result);
-SELECT @result;
-SELECT * FROM Supplier;
-#################################################
-
+##################################################################################################
 # CRUD Presentation
-
+##################################################################################################
 DELIMITER //
 CREATE PROCEDURE CPresentation (IN pAmountBottles INT, IN pSizeBottle INT, OUT result VARCHAR(16383))
 BEGIN
@@ -266,19 +247,6 @@ BEGIN
 END //
 DELIMITER ;
 
-#################################################
-CALL CPresentation(500, 2, @result);
-SELECT @result;
-CALL CPresentation(1000, 2, @result);
-SELECT @result;
-CALL RPresentation(NULL, NULL, NULL);
-CALL UPresentation(1,1000,1, @result);
-SELECT @result;
-CALL DPresentation(2,@result);
-SELECT @result;
-SELECT * FROM Presentation;
-#################################################
-
 # CRUD Cash
 
 DELIMITER //
@@ -350,21 +318,9 @@ BEGIN
 END //
 DELIMITER ;
 
-#################################################
-CALL CCash("Dolar", @result);
-SELECT @result;
-CALL CCash("Pound", @result);
-SELECT @result;
-CALL RCash(NULL, NULL);
-CALL UCash(1, "Dollar", @result);
-SELECT @result;
-CALL DCash(2,@result);
-SELECT @result;
-SELECT * FROM Cash;
-#################################################
-
+##################################################################################################
 # CRUD Product
-
+##################################################################################################
 DELIMITER //
 CREATE PROCEDURE CProduct (IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2), IN pIdProductType INT, IN pImage BLOB,
 					IN pIdSupplier INT, IN pIdPresentation INT, IN pIdCash INT, IN pTier INT, OUT result VARCHAR(16383))
@@ -574,20 +530,9 @@ BEGIN
 END //
 DELIMITER ;
 
-#################################################
-CALL CProduct("Whiskey", 2.62, 1, NULL,
-					1, 1, 1, 1, @result);
-SELECT @result;
-CALL RProduct(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-CALL UProduct(1,"Vodka",NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL, @result);
-SELECT @result;
-CALL DProduct(1,@result);
-SELECT @result;
-SELECT * FROM Product;
-#################################################
-
+##################################################################################################
 # CRUD Location
-
+##################################################################################################
 DELIMITER //
 CREATE PROCEDURE CLocation (IN pLocation GEOMETRY, IN pTypeLocation BIT, OUT result VARCHAR(16383))
 BEGIN
@@ -664,6 +609,210 @@ BEGIN
 END //
 DELIMITER ;
 
+##################################################################################################
+# CRUD Club
+##################################################################################################
+DELIMITER //
+CREATE PROCEDURE CClub (IN pClubName VARCHAR(20), IN pIdLocation INT, IN pDeliveryCostProp FLOAT, IN pIdCash INT, OUT result VARCHAR(16383))
+BEGIN
+	IF (pClubName IS NOT NULL AND pIdLocation IS NOT NULL AND pDeliveryCostProp IS NOT NULL AND pIdCash IS NOT NULL) THEN
+	BEGIN
+			IF ((SELECT COUNT(idClub) FROM Club WHERE clubName = pClubName) = 0) THEN
+				BEGIN
+					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
+						BEGIN
+							IF (pDeliveryCostProp > 0) THEN
+								BEGIN
+									IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
+										BEGIN
+											INSERT INTO Club (clubName, idLocation, deliveryCostProp, idCash, isActive)
+                                            VALUES (pClubName, pIdLocation, pDeliveryCostProp, pIdCash, 1);
+											SET result = "The Club has been added";
+										END;
+									ELSE
+										SET result = "The Cash ID specified doesn´t exists";
+									END IF;
+								END;
+							ELSE
+								SET result = "The Delivery Cost Proportion needs to be greater than 0";
+							END IF;
+						END;
+					ELSE
+						SET result = "The Location ID specified doesn´t exists";
+					END IF;
+				END;
+			ELSE
+				SET result = "There is already a Club with that name";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RClub (IN pIdClub INT, IN pClubName VARCHAR(20), IN pIdLocation INT, IN pDeliveryCostProp FLOAT, IN pIdCash INT, IN pIsActive BIT)
+BEGIN
+	SELECT idClub AS 'Club ID', clubName AS 'Club Name', idLocation AS 'Location ID',
+		deliveryCostProp AS 'Delivery Cost Proportion', idCash AS 'Cash ID', isActive AS 'Active'
+    FROM Club WHERE idClub = IFNULL(pIdClub, idClub) AND clubName = IFNULL(pClubName, clubName)
+    AND idLocation = IFNULL(pIdLocation, idLocation) AND deliveryCostProp = IFNULL(pDeliveryCostProp, deliveryCostProp)
+    AND idCash = IFNULL(pIdCash, idCash);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UClub (IN pIdClub INT, IN pClubName VARCHAR(20), IN pIdLocation INT, IN pDeliveryCostProp FLOAT, IN pIdCash INT, IN pIsActive BIT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdClub IS NOT NULL AND (SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+		BEGIN
+			IF (pClubName IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idClub) FROM Club WHERE clubName = pClubName) = 0 AND pClubName != "") THEN
+						BEGIN
+							UPDATE Club SET clubName = pClubName WHERE idClub = pIdClub;
+							SET result = CONCAT(result, 'The club name has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT(result, 'The club name hasn´t been modified because it already exists or the name can´t be empty\n');
+					END IF;
+                END;
+			END IF;
+            IF (pIdLocation IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
+						BEGIN
+							UPDATE Club SET idLocation = pIdLocation WHERE idClub = pIdClub;
+							SET result = CONCAT(result, 'The Location ID has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT(result, 'The Location ID specified doesn´t exists\n');
+					END IF;
+                END;
+			END IF;
+            IF (pDeliveryCostProp IS NOT NULL) THEN
+				BEGIN
+					IF (pDeliveryCostProp > 0) THEN
+						BEGIN
+							UPDATE Club SET deliveryCostProp = pDeliveryCostProp WHERE idClub = pIdClub;
+							SET result = CONCAT(result, 'The Delivery Cost Proportion has been modified\n');
+						END;
+					ELSE
+						SET result = "The Delivery Cost Proportion needs to be greater than 0";
+					END IF;
+                END;
+			END IF;
+            IF (pIdCash IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
+						BEGIN
+							UPDATE Club SET idCash = pIdCash WHERE idClub = pIdClub;
+							SET result = CONCAT(result, 'The Cash ID has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT(result, 'The Cash ID specified doesn´t exists\n');
+					END IF;
+                END;
+			END IF;
+            IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
+				BEGIN
+					UPDATE Club SET isActive = pIsActive WHERE idClub = pIdClub;
+                    SET result = CONCAT(result, 'The Club is now active\n');
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Club ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DClub (IN pIdClub INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+		BEGIN
+			UPDATE Club SET isActive = 0 WHERE idClub = pIdClub;
+            SET result = "The Club is now inactive";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+##################################################################################################
+
+#PRODUCT TYPE
+#################################################
+CALL CProductType('Tabaco', @result);
+SELECT @result;
+CALL RProductType(NULL, NULL, NULL);
+CALL UProductType(1, 'Whiskey', 1, @result);
+SELECT @result;
+CALL DProductType(2,@result);
+SELECT @result;
+SELECT * FROM ProductType;
+#################################################
+
+#SUPPLIER
+#################################################
+CALL CSupplier('Jackass', @result);
+SELECT @result;
+CALL RSupplier(NULL, NULL, NULL);
+CALL USupplier(1, 'DonOmar', 1, @result);
+SELECT @result;
+CALL DSupplier(1,@result);
+SELECT @result;
+SELECT * FROM Supplier;
+##################################################################################################
+
+#PRESENTATION
+#################################################
+CALL CPresentation(500, 2, @result);
+SELECT @result;
+CALL CPresentation(1000, 2, @result);
+SELECT @result;
+CALL RPresentation(NULL, NULL, NULL);
+CALL UPresentation(1,1000,1, @result);
+SELECT @result;
+CALL DPresentation(2,@result);
+SELECT @result;
+SELECT * FROM Presentation;
+#################################################
+
+#CASH
+#################################################
+CALL CCash("Dolar", @result);
+SELECT @result;
+CALL CCash("Pound", @result);
+SELECT @result;
+CALL RCash(NULL, NULL);
+CALL UCash(1, "Dollar", @result);
+SELECT @result;
+CALL DCash(2,@result);
+SELECT @result;
+SELECT * FROM Cash;
+#################################################
+
+#PRODUCT
+#################################################
+CALL CProduct("Whiskey", 2.62, 1, NULL,
+					1, 1, 1, 1, @result);
+SELECT @result;
+CALL RProduct(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+CALL UProduct(1,"Vodka",NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL, @result);
+SELECT @result;
+CALL DProduct(1,@result);
+SELECT @result;
+SELECT * FROM Product;
+#################################################
+
+#LOCATION
 #################################################
 CALL CLocation(ST_GeomFromText('POLYGON((0 5, 2 5, 2 7, 0 7, 0 5))'), 1, @result);
 SELECT @result;
@@ -675,8 +824,23 @@ SELECT @result;
 SELECT * FROM Location;
 #################################################
 
+#CLUB
+#################################################
+CALL CClub("Guardians Club", 1, 2.5, 1, @result);
+SELECT @result;
+CALL RClub(NULL,NULL,NULL,NULL,NULL, NULL);
+CALL UClub(1, "The Guardians Club", NULL, NULL, NULL, 1, @result);
+SELECT @result;
+CALL DClub(1,@result);
+SELECT @result;
+SELECT * FROM Club;
+#################################################
 
 
+
+
+
+##TEMPLATE
 
 # CRUD 
 

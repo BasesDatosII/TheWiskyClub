@@ -24,7 +24,8 @@ CREATE TABLE Club
     deliveryCostProp FLOAT NOT NULL,
     idCash INT NOT NULL,
     CONSTRAINT fk_ClubCash FOREIGN KEY(idCash)
-    REFERENCES Cash(idCash)
+    REFERENCES Cash(idCash),
+    isActive BIT NOT NULL #1 = ACTIVE, 0 = NON ACTIVE
 );
 
 CREATE TABLE Membership

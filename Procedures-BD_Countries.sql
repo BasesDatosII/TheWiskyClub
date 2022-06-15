@@ -700,7 +700,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Delivery Cost Proportion has been modified\n');
 						END;
 					ELSE
-						SET result = "The Delivery Cost Proportion needs to be greater than 0";
+						SET result = 'The Delivery Cost Proportion needs to be greater than 0\n';
 					END IF;
                 END;
 			END IF;
@@ -824,7 +824,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Stock has been modified\n');
 						END;
 					ELSE
-						SET result = "The Stock needs to be greater than 0";
+						SET result = 'The Stock needs to be greater than 0\n';
 					END IF;
                 END;
 			END IF;
@@ -900,7 +900,7 @@ BEGIN
 				##IF () THEN HERE GOES THE VALIDATION OF THE FORMAT
 					BEGIN
 						UPDATE ClientUser SET userPassword = pUserPassword WHERE idClientUser = pIdClientUser;
-						SET result = "The User has been added";
+						SET result = 'The User has been added\n';
 					END;
 				#ELSE
 					#SET result = "The User Password format is incorrect";
@@ -1045,7 +1045,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Phone Number has been modified\n');
 						END;
 					ELSE
-						SET result = "The Phone Number specified needs to have 8 digits";
+						SET result = 'The Phone Number specified needs to have 8 digits\n';
 					END IF;
                 END;
 			END IF;
@@ -1057,7 +1057,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Birth Date has been modified\n');
 						END;
 					ELSE
-						SET result = "The Birth Date can't be greater or equal than the actual Date";
+						SET result = 'The Birth Date can´t be greater or equal than the actual Date\n';
 					END IF;
                 END;
 			END IF;
@@ -1145,7 +1145,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Client User ID has been modified\n');
 						END;
 					ELSE
-						SET result = "The Client User ID specified doesn´t exists";
+						SET result = 'The Client User ID specified doesn´t exists\n';
 					END IF;
                 END;
 			END IF;
@@ -1157,7 +1157,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Info People ID has been modified\n');
 						END;
 					ELSE
-						SET result = "The Info People ID specified doesn´t exists";
+						SET result = 'The Info People ID specified doesn´t exists\n';
 					END IF;
                 END;
 			END IF;
@@ -1169,7 +1169,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Sales Counter has been modified\n');
 						END;
 					ELSE
-						SET result = "The Sales Counter can't be lower than 0";
+						SET result = 'The Sales Counter can´t be lower than 0\n';
 					END IF;
                 END;
 			END IF;
@@ -1277,7 +1277,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Info People ID has been modified\n');
 						END;
 					ELSE
-						SET result = "The Info People ID specified doesn´t exists";
+						SET result = 'The Info People ID specified doesn´t exists\n';
 					END IF;
                 END;
 			END IF;
@@ -1291,11 +1291,11 @@ BEGIN
 									SET result = CONCAT(result, 'The Card Number has been modified\n');
 								END;
 							ELSE
-								SET result = "That Card Number is already in the system";
+								SET result = 'That Card Number is already in the system\n';
                             END IF;
 						END;
 					ELSE
-						SET result = "The Card Number needs to have between 13 and 18 digits";
+						SET result = 'The Card Number needs to have between 13 and 18 digits\n';
 					END IF;
                 END;
 			END IF;
@@ -1307,7 +1307,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Expiration Date has been modified\n');
 						END;
 					ELSE
-						SET result = "The Card is expired";
+						SET result = 'The Card is expired\n';
 					END IF;
                 END;
 			END IF;
@@ -1319,11 +1319,11 @@ BEGIN
 							SET result = CONCAT(result, 'The CVV has been modified\n');
 						END;
 					ELSE
-						SET result = "The CVV needs to have between 3 and 4 digits";
+						SET result = 'The CVV needs to have between 3 and 4 digits\n';
 					END IF;
                 END;
 			END IF;
-            SET result = CONCAT(result, 'Changes made successfully \n');
+            SET result = CONCAT(result, 'Changes made successfully\n');
 		END;
 	ELSE
 		SET result = "The Client People ID can't be NULL or the ID specified doesn´t exists";
@@ -1342,6 +1342,101 @@ BEGIN
         END;
 	ELSE
 		SET result = "The Card ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+##################################################################################################
+# CRUD ClientLocation
+##################################################################################################
+
+DELIMITER //
+CREATE PROCEDURE CClientLocation (IN pIdClientUser INT, IN pIdLocation INT, OUT result VARCHAR(16383))
+BEGIN
+	IF (pIdClientUser IS NOT NULL AND pIdLocation IS NOT NULL) THEN
+	BEGIN
+			IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+				BEGIN
+					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
+						BEGIN
+							INSERT INTO ClientLocation (idClientPeople, idLocation) VALUES
+                            ((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser
+								WHERE CP.idClientUser = pIdClientUser), pIdLocation);
+							SET result = "The Client Location has been added";
+						END;
+					ELSE
+						SET result = "The Location ID specified doesn´t exists";
+					END IF;
+				END;               
+			ELSE
+				SET result = "The Client User ID specified doesn´t exists";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RClientLocation (IN pIdClientLocation INT, IN pIdClientPeople INT, IN pIdLocation INT)
+BEGIN
+	SELECT idClientLocation AS 'Client Location ID', idClientPeople AS 'Client People ID', idLocation AS 'Location ID'
+    FROM ClientLocation WHERE idClientLocation = IFNULL(pIdClientLocation, idClientLocation)
+    AND idClientPeople = IFNULL(pIdClientPeople, idClientPeople)
+    AND idLocation = IFNULL(pIdLocation, idLocation);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UClientLocation (IN pIdClientLocation INT, IN pIdClientPeople INT, IN pIdLocation INT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdClientLocation IS NOT NULL AND (SELECT COUNT(idClientLocation) FROM ClientLocation WHERE idClientLocation = pIdClientLocation) > 0) THEN
+		BEGIN
+			IF (pIdClientPeople IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idClientPeople) FROM ClientPeople WHERE idClientPeople = pIdClientPeople) > 0) THEN
+						BEGIN
+							UPDATE ClientLocation SET idClientPeople = pIdClientPeople WHERE idClientLocation = pIdClientLocation;
+							SET result = CONCAT(result, 'The Client People ID has been modified\n');
+						END;
+					ELSE
+						SET result = 'The Client People ID specified doesn´t exists\n';
+					END IF;
+                END;
+			END IF;
+            IF (pIdLocation IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
+						BEGIN
+							UPDATE ClientLocation SET idLocation = pIdLocation WHERE idClientLocation = pIdClientLocation;
+							SET result = CONCAT(result, 'The Client Location ID has been modified\n');
+						END;
+					ELSE
+						SET result = 'The Location ID specified doesn´t exists\n';
+					END IF;
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Client Location ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DClientLocation (IN pIdClientLocation INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idClientLocation) FROM ClientLocation WHERE idClientLocation = pIdClientLocation) > 0) THEN
+		BEGIN
+			DELETE FROM ClientLocation WHERE idClientLocation = pIdClientLocation;
+            SET result = "The Client Location has been removed";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The Client Location ID specified doesn´t exists";
 	END IF;
 END //
 DELIMITER ;
@@ -1639,7 +1734,19 @@ SELECT @result;
 SELECT * FROM Card;
 #################################################
 
-
+#CLIENTLOCATION
+#################################################
+CALL CClientLocation(1, 1, @result);
+SELECT @result;
+CALL CClientLocation(1, 1, @result);
+SELECT @result;
+CALL RClientLocation(NULL, NULL, NULL);
+CALL UClientLocation(1, NULL, 2, @result);
+SELECT @result;
+CALL DClientLocation(2,@result);
+SELECT @result;
+SELECT * FROM ClientLocation;
+#################################################
 
 
 

@@ -229,10 +229,10 @@ CREATE TABLE Qualification
 
 CREATE TABLE Complaint
 (
-	Complaint INT AUTO_INCREMENT, PRIMARY KEY (Complaint),
+	idComplaint INT AUTO_INCREMENT, PRIMARY KEY (idComplaint),
     idWorkerReview INT NOT NULL,
     CONSTRAINT fk_ComplaintWorkerReview FOREIGN KEY(idWorkerReview)
     REFERENCES WorkerReview(idWorkerReview),
-    qualDescription VARCHAR(200) NOT NULL,
+    compDescription VARCHAR(200) NOT NULL,
     solved BIT NOT NULL #1 = NOT SOLVED, 0 = SOLVED
 );

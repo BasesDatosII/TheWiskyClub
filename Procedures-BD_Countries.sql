@@ -1847,17 +1847,17 @@ BEGIN
 					IF (pQualDescription != "") THEN
 						BEGIN
 							UPDATE Qualification SET qualDescription = pQualDescription WHERE idQualification = pIdQualification;
-							SET result = CONCAT(result, 'The Qualification has been modified\n');
+							SET result = CONCAT(result, 'The Qualification Description has been modified\n');
 						END;
 					ELSE
-						SET result = CONCAT('The Qualification can´t be empty\n');
+						SET result = CONCAT('The Qualification Description can´t be empty\n');
 					END IF;
 				END;
 			END IF;
             SET result = CONCAT(result, 'Changes made successfully \n');
 		END;
 	ELSE
-		SET result = "The Worker Review ID can't be NULL or the ID specified doesn´t exists";
+		SET result = "The Qualification ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
 END //
 DELIMITER ;
@@ -1877,7 +1877,107 @@ BEGIN
 END //
 DELIMITER ;
 
+##################################################################################################
+# CRUD Complaint
+##################################################################################################
 
+DELIMITER //
+CREATE PROCEDURE CComplaint (IN pIdWorkerReview INT, IN pCompDescription VARCHAR(200), OUT result VARCHAR(16383))
+BEGIN
+	IF (pIdWorkerReview IS NOT NULL AND pCompDescription IS NOT NULL) THEN
+		BEGIN
+			IF ((SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
+				BEGIN
+					IF (pCompDescription != "") THEN
+						BEGIN
+							INSERT INTO Complaint (idWorkerReview, compDescription, solved) VALUES
+							(pIdWorkerReview, pCompDescription, 1);
+							SET result = "The Complaint has been added";
+						END;
+					ELSE
+						SET result = "The Complaint can´t be empty";
+					END IF;
+				END;
+			ELSE
+				SET result = "The Worker Review ID specified doesn´t exists";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RComplaint (IN pIdComplaint INT, IN pIdWorkerReview INT, IN pCompDescription VARCHAR(200), IN pSolved BIT)
+BEGIN
+	SELECT idComplaint AS 'Complaint ID', idWorkerReview AS 'Worker Review ID',
+    compDescription AS 'Qualification Description', solved AS 'Solved'
+    FROM Complaint WHERE idComplaint = IFNULL(pIdComplaint, idComplaint)
+    AND idWorkerReview = IFNULL(pIdWorkerReview, idWorkerReview)
+    AND compDescription = IFNULL(pCompDescription, compDescription)
+	AND solved = IFNULL(pSolved, solved);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UComplaint (IN pIdComplaint INT, IN pIdWorkerReview INT, IN pCompDescription VARCHAR(200), IN pSolved BIT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdComplaint IS NOT NULL AND (SELECT COUNT(idComplaint) FROM Complaint WHERE idComplaint = pIdComplaint) > 0) THEN
+		BEGIN
+			IF (pIdWorkerReview IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
+						BEGIN
+							UPDATE Complaint SET idWorkerReview = pIdWorkerReview WHERE idComplaint = pIdComplaint;
+							SET result = CONCAT(result, 'The Worker Review ID has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT('The Worker Review ID specified doesn´t exists\n');
+					END IF;
+                END;
+			END IF;
+            IF (pCompDescription IS NOT NULL) THEN
+				BEGIN
+					IF (pCompDescription != "") THEN
+						BEGIN
+							UPDATE Complaint SET compDescription = pCompDescription WHERE idComplaint = pIdComplaint;
+							SET result = CONCAT(result, 'The Complaint Description has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT('The Complaint Description can´t be empty\n');
+					END IF;
+				END;
+			END IF;
+			IF (pSolved IS NOT NULL) THEN
+				BEGIN
+					UPDATE Complaint SET solved = pSolved WHERE idComplaint = pIdComplaint;
+                    SET result = CONCAT(result, 'The Complaint Status has been modified\n');
+				END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Complaint ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DComplaint (IN pIdComplaint INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idComplaint) FROM Complaint WHERE idComplaint = pIdComplaint) > 0) THEN
+		BEGIN
+			DELETE FROM Complaint WHERE idComplaint = pIdComplaint;
+            SET result = "The Complaint has been removed";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The Complaint ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
 
 
 ##TEMPLATE
@@ -2229,6 +2329,20 @@ SELECT @result;
 CALL DQualification(2,@result);
 SELECT @result;
 SELECT * FROM Qualification;
+#################################################
+
+#COMPLAINT
+#################################################
+CALL CComplaint(1, "I don't like him", @result);
+SELECT @result;
+CALL CComplaint(1, "I don´t like how he talks", @result);
+SELECT @result;
+CALL RComplaint(NULL, NULL, NULL, NULL);
+CALL UComplaint(1, NULL, NULL, 0, @result);
+SELECT @result;
+CALL DComplaint(2,@result);
+SELECT @result;
+SELECT * FROM Complaint;
 #################################################
 
 

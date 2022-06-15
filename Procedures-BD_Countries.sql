@@ -1090,17 +1090,119 @@ BEGIN
 END //
 DELIMITER ;
 
-#INFOPEOPLE
-#################################################
-CALL CInfoPeople("Daniel", "Araya Sambucci", "danielarayasambucci@gmail.com", 70145250, "2002-03-10", @result);
-SELECT @result;
-CALL RInfoPeople(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-CALL UInfoPeople(1, NULL, NULL, NULL, NULL, NULL, 1, @result);
-SELECT @result;
-CALL DInfoPeople(1,@result);
-SELECT @result;
-SELECT * FROM InfoPeople;
-#################################################
+##################################################################################################
+# CRUD ClientPeople
+##################################################################################################
+
+DELIMITER //
+CREATE PROCEDURE CClientPeople (IN pIdClientUser INT, IN pIdInfoPeople INT, OUT result VARCHAR(16383))
+BEGIN
+	IF (pIdClientUser IS NOT NULL AND pIdInfoPeople IS NOT NULL) THEN
+	BEGIN
+			IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+				BEGIN
+					IF ((SELECT COUNT(idInfoPeople) FROM InfoPeople WHERE idInfoPeople = pIdInfoPeople) > 0) THEN
+						BEGIN
+							INSERT INTO ClientPeople (idClientUser, idInfoPeople, isActive) VALUES (pIdClientUser, pIdInfoPeople, 1);
+							SET result = "The Client People has been added";
+						END;
+					ELSE
+						SET result = "The Info People ID specified doesn´t exists";
+					END IF;
+				END;               
+			ELSE
+				SET result = "The Client User ID specified doesn´t exists";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RClientPeople (IN pIdClientPeople INT, IN pIdClientUser INT, IN pIdInfoPeople INT, IN pSalesCounter INT, IN pIsActive BIT)
+BEGIN
+	SELECT idClientPeople AS 'Client People ID', idClientUser AS 'Client User ID', idInfoPeople AS 'Info People ID',
+		salesCounter AS 'Sales Counter', isActive AS 'Active'
+    FROM ClientPeople WHERE idClientPeople = IFNULL(pIdClientPeople, idClientPeople) AND idClientUser = IFNULL(pIdClientUser, idClientUser)
+    AND idInfoPeople = IFNULL(pIdInfoPeople, idInfoPeople) AND salesCounter = IFNULL(pSalesCounter, salesCounter)
+	AND isActive = IFNULL(pIsActive, isActive);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UClientPeople (IN pIdClientPeople INT, IN pIdClientUser INT, IN pIdInfoPeople INT, IN pSalesCounter INT, IN pIsActive BIT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdClientPeople IS NOT NULL AND (SELECT COUNT(idClientPeople) FROM ClientPeople WHERE idClientPeople = pIdClientPeople) > 0) THEN
+		BEGIN
+			IF (pIdClientUser IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+						BEGIN
+							UPDATE ClientPeople SET idClientUser = pIdClientUser WHERE idClientPeople = pIdClientPeople;
+							SET result = CONCAT(result, 'The Client User ID has been modified\n');
+						END;
+					ELSE
+						SET result = "The Client User ID specified doesn´t exists";
+					END IF;
+                END;
+			END IF;
+            IF (pIdInfoPeople IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idInfoPeople) FROM InfoPeople WHERE idInfoPeople = pIdInfoPeople) > 0) THEN
+						BEGIN
+							UPDATE ClientPeople SET idInfoPeople = pIdInfoPeople WHERE idClientPeople = pIdClientPeople;
+							SET result = CONCAT(result, 'The Info People ID has been modified\n');
+						END;
+					ELSE
+						SET result = "The Info People ID specified doesn´t exists";
+					END IF;
+                END;
+			END IF;
+            IF (pSalesCounter IS NOT NULL) THEN
+				BEGIN
+					IF (pSalesCounter >= 0) THEN
+						BEGIN
+							UPDATE ClientPeople SET salesCounter = pSalesCounter WHERE idClientPeople = pIdClientPeople;
+							SET result = CONCAT(result, 'The Sales Counter has been modified\n');
+						END;
+					ELSE
+						SET result = "The Sales Counter can't be lower than 0";
+					END IF;
+                END;
+			END IF;
+            IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
+				BEGIN
+					UPDATE ClientPeople SET isActive = pIsActive WHERE idClientPeople = pIdClientPeople;
+                    SET result = CONCAT(result, 'The Client People is now active\n');
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Client People ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DClientPeople (IN pIdClientPeople INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idClientPeople) FROM ClientPeople WHERE idClientPeople = pIdClientPeople) > 0) THEN
+		BEGIN
+			UPDATE ClientPeople SET isActive = 0 WHERE idClientPeople = pIdClientPeople;
+            SET result = "The Client Information is now inactive";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+
 
 ##################################################################################################
 
@@ -1215,6 +1317,30 @@ SELECT @result;
 CALL DClientUser(1,@result);
 SELECT @result;
 SELECT * FROM ClientUser;
+#################################################
+
+#INFOPEOPLE
+#################################################
+CALL CInfoPeople("Daniel", "Araya Sambucci", "danielarayasambucci@gmail.com", 70145250, "2002-03-10", @result);
+SELECT @result;
+CALL RInfoPeople(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+CALL UInfoPeople(1, NULL, NULL, NULL, NULL, NULL, 1, @result);
+SELECT @result;
+CALL DInfoPeople(1,@result);
+SELECT @result;
+SELECT * FROM InfoPeople;
+#################################################
+
+#CLIENTPEOPLE
+#################################################
+CALL CClientPeople(1, 1, @result);
+SELECT @result;
+CALL RClientPeople(NULL, NULL, NULL, NULL, NULL);
+CALL UClientPeople(1, NULL, NULL, NULL, 1, @result);
+SELECT @result;
+CALL DClientPeople(1,@result);
+SELECT @result;
+SELECT * FROM ClientPeople;
 #################################################
 
 ##TEMPLATE

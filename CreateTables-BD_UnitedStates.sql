@@ -120,7 +120,7 @@ CREATE TABLE Card
     idInfoPeople INT NOT NULL,
     CONSTRAINT fk_CardInfoPeople FOREIGN KEY(idInfoPeople)
     REFERENCES InfoPeople(idInfoPeople),
-    cardNumber INT NOT NULL,
+    cardNumber VARCHAR(18) NOT NULL,
     expirationDate DATE NOT NULL,
     cvv INT NOT NULL
 );

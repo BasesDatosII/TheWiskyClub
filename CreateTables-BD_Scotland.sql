@@ -114,13 +114,13 @@ CREATE TABLE InfoPeople
     isActive BIT NOT NULL #1 = ACTIVE, 0 = NON ACTIVE
 );
 
-CREATE TABLE CreditCard
+CREATE TABLE Card
 (
 	idCard INT AUTO_INCREMENT, PRIMARY KEY (idCard),
     idInfoPeople INT NOT NULL,
     CONSTRAINT fk_CardInfoPeople FOREIGN KEY(idInfoPeople)
     REFERENCES InfoPeople(idInfoPeople),
-    cardNumber INT NOT NULL,
+    cardNumber VARCHAR(18) NOT NULL,
     expirationDate DATE NOT NULL,
     cvv INT NOT NULL
 );

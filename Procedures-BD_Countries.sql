@@ -950,7 +950,7 @@ BEGIN
 						BEGIN
 							IF (pEmail != "") THEN
 								BEGIN
-									IF (pPhoneNumber BETWEEN 60000000 AND 89999999) THEN
+									IF ((SELECT CHAR_LENGTH (pPhoneNumber)) = 8) THEN
 										BEGIN
 											IF (pBirthDate < CURRENT_DATE()) THEN
 												BEGIN
@@ -963,7 +963,7 @@ BEGIN
                                             END IF;
 										END;
 									ELSE
-										SET result = "The Phone Number specified needs to be between 60000000 and 89999999";
+										SET result = "The Phone Number specified needs to have 8 digits";
 									END IF;
 								END;
 							ELSE
@@ -1039,13 +1039,13 @@ BEGIN
 			END IF;
             IF (pPhoneNumber IS NOT NULL) THEN
 				BEGIN
-					IF (pPhoneNumber BETWEEN 60000000 AND 89999999) THEN
+					IF ((SELECT CHAR_LENGTH (pPhoneNumber)) = 8) THEN
 						BEGIN
 							UPDATE InfoPeople SET phoneNumber = pPhoneNumber WHERE idInfoPeople = pIdInfoPeople;
 							SET result = CONCAT(result, 'The Phone Number has been modified\n');
 						END;
 					ELSE
-						SET result = "The Phone Number specified needs to be between 60000000 and 89999999";
+						SET result = "The Phone Number specified needs to have 8 digits";
 					END IF;
                 END;
 			END IF;
@@ -1202,6 +1202,197 @@ BEGIN
 END //
 DELIMITER ;
 
+##################################################################################################
+# CRUD Card
+##################################################################################################
+
+DELIMITER //
+CREATE PROCEDURE CCard (IN pIdClientUser INT, IN pCardNumber VARCHAR(30), IN pExpirationDate DATE, IN pCVV INT, OUT result VARCHAR(16383))
+BEGIN
+	IF (pIdClientUser IS NOT NULL AND pCardNumber IS NOT NULL AND pExpirationDate IS NOT NULL AND pCVV IS NOT NULL) THEN
+		BEGIN
+			IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+				BEGIN
+					IF (CHAR_LENGTH(pCardNumber) BETWEEN 13 AND 18) THEN
+						BEGIN
+							IF ((SELECT COUNT(cardNumber) FROM Card WHERE cardNumber = pCardNumber) = 0) THEN
+								BEGIN
+									IF (pExpirationDate > CURRENT_DATE()) THEN
+										BEGIN
+											IF (CHAR_LENGTH(pCVV) BETWEEN 3 AND 4) THEN
+												BEGIN
+													INSERT INTO Card (idInfoPeople, cardNumber, expirationDate, cvv) VALUES
+													((SELECT IP.idInfoPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser
+														INNER JOIN InfoPeople IP ON CP.idInfoPeople = IP.idInfoPeople
+														WHERE CP.idClientUser = pIdClientUser), pCardNumber, pExpirationDate, pCVV);
+														SET result = "The Card has been added";
+												END;
+											ELSE
+												SET result = "The CVV needs to have between 3 and 4 digits";
+											END IF;
+										END;
+									ELSE
+										SET result = "The Card is expired";
+									END IF;
+								END;
+							ELSE
+								SET result = "That Card Number is already in the system";
+							END IF;
+						END;
+					ELSE
+						SET result = "The Card Number needs to have between 13 and 18 digits";
+					END IF;
+				END;
+			ELSE
+				SET result = "The Client User ID specified doesn´t exists";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RCard (IN pIdCard INT, IN pIdInfoPeople INT, IN pCardNumber VARCHAR(30), IN pExpirationDate DATE, IN pCVV INT)
+BEGIN
+	SELECT idCard AS 'Card ID', idInfoPeople AS 'Info People ID', cardNumber AS 'Card Number',
+		expirationDate AS 'Expiration Date', cvv AS 'CVV'
+    FROM Card WHERE idCard = IFNULL(pIdCard, idCard) AND idInfoPeople = IFNULL(pIdInfoPeople, idInfoPeople)
+    AND cardNumber = IFNULL(pCardNumber, cardNumber) AND expirationDate = IFNULL(pExpirationDate, expirationDate);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UCard (IN pIdCard INT, IN pIdInfoPeople INT, IN pCardNumber INT, IN pExpirationDate DATE, IN pCVV INT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdCard IS NOT NULL AND (SELECT COUNT(idCard) FROM Card WHERE idCard = pIdCard) > 0) THEN
+		BEGIN
+			IF (pIdInfoPeople IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idInfoPeople) FROM InfoPeople WHERE idInfoPeople = pIdInfoPeople) > 0) THEN
+						BEGIN
+							UPDATE Card SET idInfoPeople = pIdInfoPeople WHERE idCard = pIdCard;
+							SET result = CONCAT(result, 'The Info People ID has been modified\n');
+						END;
+					ELSE
+						SET result = "The Info People ID specified doesn´t exists";
+					END IF;
+                END;
+			END IF;
+            IF (pCardNumber IS NOT NULL) THEN
+				BEGIN
+					IF (CHAR_LENGTH(pCardNumber) BETWEEN 13 AND 18) THEN
+						BEGIN
+							IF ((SELECT COUNT(cardNumber) FROM Card WHERE cardNumber = pCardNumber) = 0) THEN
+								BEGIN
+									UPDATE Card SET cardNumber = pCardNumber WHERE idCard = pIdCard;
+									SET result = CONCAT(result, 'The Card Number has been modified\n');
+								END;
+							ELSE
+								SET result = "That Card Number is already in the system";
+                            END IF;
+						END;
+					ELSE
+						SET result = "The Card Number needs to have between 13 and 18 digits";
+					END IF;
+                END;
+			END IF;
+            IF (pExpirationDate IS NOT NULL) THEN
+				BEGIN
+					IF (pExpirationDate > CURRENT_DATE()) THEN
+						BEGIN
+							UPDATE Card SET expirationDate = pExpirationDate WHERE idCard = pIdCard;
+							SET result = CONCAT(result, 'The Expiration Date has been modified\n');
+						END;
+					ELSE
+						SET result = "The Card is expired";
+					END IF;
+                END;
+			END IF;
+			IF (pCVV IS NOT NULL) THEN
+				BEGIN
+					IF (CHAR_LENGTH(pCVV) BETWEEN 3 AND 4) THEN
+						BEGIN
+							UPDATE Card SET cvv = pCVV WHERE idCard = pIdCard;
+							SET result = CONCAT(result, 'The CVV has been modified\n');
+						END;
+					ELSE
+						SET result = "The CVV needs to have between 3 and 4 digits";
+					END IF;
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Client People ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DCard (IN pIdCard INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idCard) FROM Card WHERE idCard = pIdCard) > 0) THEN
+		BEGIN
+			DELETE FROM Card WHERE idCard = pIdCard;
+            SET result = "The Card has been removed";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The Card ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+
+
+
+
+
+
+##TEMPLATE
+
+##################################################################################################
+# CRUD 
+##################################################################################################
+
+DELIMITER //
+CREATE PROCEDURE C (, OUT result VARCHAR(16383))
+BEGIN
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE R ()
+BEGIN
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE U (, OUT result VARCHAR(16383))
+BEGIN
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE D (, OUT result VARCHAR(16383))
+BEGIN
+END //
+DELIMITER ;
+
+#
+#################################################
+CALL C(, @result);
+SELECT @result;
+CALL R();
+CALL U(, @result);
+SELECT @result;
+CALL D(,@result);
+SELECT @result;
+SELECT * FROM ;
+#################################################
 
 
 ##################################################################################################
@@ -1211,66 +1402,87 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE OpenOrder(IN pIdClientUser INT, IN pIdClub INT, IN pIdEmployer INT, IN pIdMailer INT, OUT result VARCHAR(16383))
 BEGIN
-	IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+	IF (pIdClientUser IS NOT NULL AND pIdClub IS NOT NULL AND pIdEmployer IS NOT NULL AND pIdMailer IS NOT NULL) THEN
 		BEGIN
-			IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+			IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
 				BEGIN
-					INSERT INTO OrderP (idClientPeople, orderDate, idClub, idEmployer, idMailer) VALUES
-                    ((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser WHERE CP.idClientUser = pIdClientUser),
-                    CURRENT_DATE(), pIdClub, pIdEmployer, pIdMailer);
-                    SET result = LAST_INSERT_ID();
-                END;
+					IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+						BEGIN
+							INSERT INTO OrderP (idClientPeople, orderDate, idClub, idEmployer, idMailer) VALUES
+							((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser WHERE CP.idClientUser = pIdClientUser),
+							CURRENT_DATE(), pIdClub, pIdEmployer, pIdMailer);
+							SET result = LAST_INSERT_ID();
+						END;
+					ELSE
+						SET result = "The Club ID specified doesn´t exists";
+					END IF;
+				END;
 			ELSE
-				SET result = "The Club ID specified doesn´t exists";
-            END IF;
-        END;
+				SET result = "The Client User ID specified doesn´t exists";
+			END IF;
+		END;
 	ELSE
-		SET result = "The Client User ID specified doesn´t exists";
+		SET result = "Any of the parameters can't be NULL";
 	END IF;
 END//
 DELIMITER ;
 
+#BUY PRODUCT
 DELIMITER //
 CREATE PROCEDURE BuyProduct(IN pIdOrderP INT, IN pIdProduct INT, IN pAmount INT, OUT result VARCHAR(16383))
 BEGIN
-	IF ((SELECT COUNT(idOrderP) FROM OrderP WHERE idOrderP = pIdOrderP) > 0) THEN
+	IF (pIdOrderP IS NOT NULL AND pIdProduct IS NOT NULL AND pAmount IS NOT NULL) THEN
 		BEGIN
-			IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
+			IF ((SELECT COUNT(idOrderP) FROM OrderP WHERE idOrderP = pIdOrderP) > 0) THEN
 				BEGIN
-					IF (pAmount > 0) THEN
+					IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
 						BEGIN
-							START TRANSACTION;
-								SET @idClub = (SELECT idClub FROM OrderP WHERE idOrderP = pIdOrderP);
-								IF ((SELECT isActive FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub) = 1) THEN
-									BEGIN
-										SET @cantAct = (SELECT stock - pAmount FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub);
-                                        IF (@cantAct >= 0) THEN
+							IF (pAmount > 0) THEN
+								BEGIN
+									START TRANSACTION;
+										SET @idClub = (SELECT idClub FROM OrderP WHERE idOrderP = pIdOrderP);
+										IF ((SELECT isActive FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub) = 1) THEN
 											BEGIN
-												INSERT INTO OrderLine (idOrderP, idProduct, cost, amount) VALUES
-                                                (pIdOrderP, pIdProduct, (SELECT cost FROM Product WHERE idProduct = pIdProduct), pAmount);
-                                                UPDATE Inventory SET stock = @cantAct WHERE idProduct = pIdProduct AND idClub = @idClub;
-                                                SET result = "Product bought succesfully";
-                                            END;
+												SET @cantAct = (SELECT stock - pAmount FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub);
+												IF (@cantAct >= 0) THEN
+													BEGIN
+														INSERT INTO OrderLine (idOrderP, idProduct, cost, amount) VALUES
+														(pIdOrderP, pIdProduct, (SELECT cost FROM Product WHERE idProduct = pIdProduct), pAmount);
+														UPDATE Inventory SET stock = @cantAct WHERE idProduct = pIdProduct AND idClub = @idClub;
+														SET result = "Product bought succesfully";
+													END;
+												ELSE
+													SET result = "The inventory of that product doesn´t has enough stock";
+												END IF;
+											END;
 										ELSE
-											SET result = "The inventory of that product doesn´t has enough stock";
+											SET result = "The inventory of that product is currently inactive";
 										END IF;
-                                    END;
-								ELSE
-									SET result = "The inventory of that product is currently inactive";
-								END IF;
-                            COMMIT;
-                        END;
+									COMMIT;
+								END;
+							ELSE
+								SET result = "The amount needs to be greater than 0";
+							END IF;
+						END;
 					ELSE
-						SET result = "The amount needs to be greater than 0";
-                    END IF;
-                END;
+						SET result = "The Product ID specified doesn´t exists";
+					END IF;
+				END;
 			ELSE
-				SET result = "The Product ID specified doesn´t exists";
-            END IF;
-        END;
+				SET result = "The Order ID specified doesn´t exists";
+			END IF;
+		END;
 	ELSE
-		SET result = "The Order ID specified doesn´t exists";
-    END IF;
+		SET result = "Any of the parameters can't be NULL";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE ReadLine(IN pIdOrderP INT)
+BEGIN
+	SELECT idOrderLine AS 'Order Line ID', idProduct AS 'Product ID',
+		cost AS 'Cost', amount AS 'Amount' FROM OrderLine WHERE idOrderP = pIdOrderP;
 END //
 DELIMITER ;
 
@@ -1413,6 +1625,36 @@ SELECT @result;
 SELECT * FROM ClientPeople;
 #################################################
 
+#CARD
+#################################################
+CALL CCard(1, "5050505020202020", "2024-04-01", 392, @result);
+SELECT @result;
+CALL CCard(1, "5050505020202021", "2024-04-01", 392, @result);
+SELECT @result;
+CALL RCard(NULL, NULL, NULL, NULL, NULL);
+CALL UCard(1, NULL, NULL, NULL, 391, @result);
+SELECT @result;
+CALL DCard(2,@result);
+SELECT @result;
+SELECT * FROM Card;
+#################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #OPENORDER
 #################################################
 CALL OpenOrder(1, 1, 1, 2, @result);
@@ -1423,51 +1665,14 @@ SELECT * FROM OrderP;
 #BUYPRODUCT
 #################################################
 CALL BuyProduct(1, 1, 5, @result);
+CALL BuyProduct(1, 1, 6, @result);
 SELECT @result;
 SELECT * FROM OrderLine;
 #################################################
 
-
-
-
-##TEMPLATE
-
-##################################################################################################
-# CRUD 
-##################################################################################################
-
-DELIMITER //
-CREATE PROCEDURE C (, OUT result VARCHAR(16383))
-BEGIN
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE R ()
-BEGIN
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE U (, OUT result VARCHAR(16383))
-BEGIN
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE D (, OUT result VARCHAR(16383))
-BEGIN
-END //
-DELIMITER ;
-
-#
+#READLINE
 #################################################
-CALL C(, @result);
-SELECT @result;
-CALL R();
-CALL U(, @result);
-SELECT @result;
-CALL D(,@result);
-SELECT @result;
-SELECT * FROM ;
+CALL ReadLine(2);
 #################################################
+
+

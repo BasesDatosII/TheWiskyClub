@@ -1,4 +1,8 @@
 ##################################################################################################
+#CRUDS
+##################################################################################################
+
+##################################################################################################
 # CRUD ProductType
 ##################################################################################################
 DELIMITER //
@@ -2259,51 +2263,10 @@ BEGIN
 END //
 DELIMITER ;
 
-##TEMPLATE
 
 ##################################################################################################
-# CRUD 
+#PROCEDURES
 ##################################################################################################
-
-DELIMITER //
-CREATE PROCEDURE C (, OUT result VARCHAR(16383))
-BEGIN
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE R ()
-BEGIN
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE U (, OUT result VARCHAR(16383))
-BEGIN
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE D (, OUT result VARCHAR(16383))
-BEGIN
-END //
-DELIMITER ;
-
-#
-#################################################
-CALL C(, @result);
-SELECT @result;
-CALL R();
-CALL U(, @result);
-SELECT @result;
-CALL D(,@result);
-SELECT @result;
-SELECT * FROM ;
-#################################################
-
-
-##################################################################################################
-
 
 #OPEN ORDER
 DELIMITER //
@@ -2683,6 +2646,56 @@ SELECT * FROM OrderLine;
 #READLINE
 #################################################
 CALL ReadLine(1);
+#################################################
+
+
+
+
+
+
+
+
+
+##TEMPLATE
+
+##################################################################################################
+# CRUD 
+##################################################################################################
+
+DELIMITER //
+CREATE PROCEDURE C (, OUT result VARCHAR(16383))
+BEGIN
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE R ()
+BEGIN
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE U (, OUT result VARCHAR(16383))
+BEGIN
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE D (, OUT result VARCHAR(16383))
+BEGIN
+END //
+DELIMITER ;
+
+#
+#################################################
+CALL C(, @result);
+SELECT @result;
+CALL R();
+CALL U(, @result);
+SELECT @result;
+CALL D(,@result);
+SELECT @result;
+SELECT * FROM ;
 #################################################
 
 

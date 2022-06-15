@@ -2136,7 +2136,128 @@ BEGIN
 END //
 DELIMITER ;
 
+##################################################################################################
+# CRUD PopularProducts
+##################################################################################################
 
+DELIMITER //
+CREATE PROCEDURE CPopularProducts (IN pIdProduct INT, OUT result VARCHAR(16383))
+BEGIN
+	IF (pIdProduct IS NOT NULL) THEN
+		BEGIN
+			IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
+				BEGIN
+					IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) = 0) THEN
+						BEGIN
+							INSERT INTO PopularProducts (idProduct) VALUES (pIdProduct);
+							SET result = "The Popular Product has been added";
+						END;
+					ELSE
+						SET result = "The Product ID specified already has a Popular Product Data for this product";
+                    END IF;
+				END;
+			ELSE
+				SET result = "The Popular Product ID specified doesn´t exists";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RPopularProducts (IN pIdPopularProducts INT, IN pIdProduct INT, IN pAmount INT)
+BEGIN
+	SELECT idPopularProducts AS 'Popular Products ID', idProduct AS 'Product ID', amount AS 'Amount Sold'
+    FROM PopularProducts WHERE idPopularProducts = IFNULL(pIdPopularProducts, idPopularProducts)
+    AND idProduct = IFNULL(pIdProduct, idProduct) AND amount = IFNULL(pAmount, amount);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UPopularProducts (IN pIdPopularProducts INT, IN pIdProduct INT, IN pAmount INT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF ((pIdPopularProducts IS NOT NULL AND (SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts) > 0) OR
+		(pIdProduct IS NOT NULL AND (SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) > 0)) THEN
+		BEGIN
+			IF (pIdProduct IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
+						BEGIN
+							IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) = 0) THEN
+								BEGIN
+									UPDATE PopularProducts SET idProduct = pIdProduct WHERE idPopularProducts = pIdPopularProducts;
+									SET result = CONCAT(result, 'The Product ID has been modified\n');
+								END;
+							ELSE
+								SET result = CONCAT('The Product ID specified already has a Popular Product Data for this product\n');
+							END IF;
+						END;
+					ELSE
+						SET result = CONCAT('The Product ID specified doesn´t exists\n');
+					END IF;
+                END;
+			END IF;
+            IF (pAmount IS NOT NULL) THEN
+				BEGIN
+					IF (pAmount >= 0) THEN
+						BEGIN
+                            #DECIDES THE MESSAGE AND OPERATION TO RETURN BASED ON THE PAMOUNT PARAMETER
+							IF (pAmount > 0) THEN
+								BEGIN
+									#CHECKS ACTUAL AMOUNT DEPENDING ON KEY IDPOPULARPRODUCTS OR KEY IDPRODUCT
+                                    IF (pIdPopularProducts IS NOT NULL) THEN
+										BEGIN
+											SET @cantAct = (SELECT amount FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts);
+											UPDATE PopularProducts SET amount = (@cantAct + pAmount)
+											WHERE idPopularProducts = pIdPopularProducts;
+										END;
+									ELSE IF (pIdProduct IS NOT NULL) THEN
+										BEGIN
+											SET @cantAct = (SELECT amount FROM PopularProducts WHERE idProduct = pIdProduct);
+											UPDATE PopularProducts SET amount = (@cantAct + pAmount)
+											WHERE idProduct = pIdProduct;
+										END;
+									END IF;
+									END IF;
+									SET result = CONCAT(result, 'The Amount has been modified\n');
+								END;
+							ELSE
+								BEGIN
+									UPDATE PopularProducts SET amount = pAmount WHERE idPopularProducts = pIdPopularProducts;
+									SET result = CONCAT(result, 'The Amount has been reseted to 0\n');
+								END;
+							END IF;
+						END;
+					ELSE
+						SET result = CONCAT('The Amount needs to be greater or equal than 0\n');
+					END IF;
+				END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Popular Products ID AND the Product ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DPopularProducts (IN pIdPopularProducts INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts) > 0) THEN
+		BEGIN
+			DELETE FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts;
+            SET result = "The Popular Products has been removed";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The Popular Products ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
 
 ##TEMPLATE
 
@@ -2232,9 +2353,19 @@ BEGIN
 												SET @cantAct = (SELECT stock - pAmount FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub);
 												IF (@cantAct >= 0) THEN
 													BEGIN
-														INSERT INTO OrderLine (idOrderP, idProduct, cost, amount) VALUES
-														(pIdOrderP, pIdProduct, (SELECT cost FROM Product WHERE idProduct = pIdProduct), pAmount);
+														#CHECKS IF THE PRODUCT IS ALREADY IN THE ORDER AND UPDATES THE VALUE IF IT IS
+                                                        IF ((SELECT COUNT(idOrderLine) FROM OrderLine WHERE idOrderp = pIdOrderP AND idProduct = pIdProduct) > 0) THEN
+																UPDATE OrderLine SET amount = (amount + pAmount) WHERE idOrderp = pIdOrderP AND idProduct = pIdProduct;
+														ELSE
+															INSERT INTO OrderLine (idOrderP, idProduct, cost, amount) VALUES
+															(pIdOrderP, pIdProduct, (SELECT cost FROM Product WHERE idProduct = pIdProduct), pAmount);
+														END IF;
 														UPDATE Inventory SET stock = @cantAct WHERE idProduct = pIdProduct AND idClub = @idClub;
+                                                        #UPDATES POPULAR PRODUCT SALES
+                                                        IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) = 0) THEN
+															CALL CPopularProducts(pIdProduct, @result);
+														END IF;
+                                                        CALL UPopularProducts(NULL, pIdProduct, pAmount, @result);
 														SET result = "Product bought succesfully";
 													END;
 												ELSE
@@ -2272,6 +2403,8 @@ BEGIN
 END //
 DELIMITER ;
 
+##################################################################################################
+#CRUD CALLS
 ##################################################################################################
 
 #PRODUCT TYPE
@@ -2515,9 +2648,21 @@ SELECT @result;
 SELECT * FROM Review;
 #################################################
 
+#POPULARPRODUCTS
+#################################################
+CALL CPopularProducts(1, @result);
+SELECT @result;
+CALL RPopularProducts(NULL, NULL, NULL);
+CALL UPopularProducts(1, NULL, 0, @result);
+SELECT @result;
+CALL DPopularProducts(3,@result);
+SELECT @result;
+SELECT * FROM PopularProducts;
+#################################################
 
-
-
+##################################################################################################
+#PROCEDURE CALLS
+##################################################################################################
 
 #OPENORDER
 #################################################
@@ -2528,7 +2673,8 @@ SELECT * FROM OrderP;
 
 #BUYPRODUCT
 #################################################
-CALL BuyProduct(1, 1, 5, @result);
+CALL BuyProduct(1, 1, 2, @result);
+SELECT @result;
 CALL BuyProduct(1, 1, 6, @result);
 SELECT @result;
 SELECT * FROM OrderLine;
@@ -2536,7 +2682,7 @@ SELECT * FROM OrderLine;
 
 #READLINE
 #################################################
-CALL ReadLine(2);
+CALL ReadLine(1);
 #################################################
 
 

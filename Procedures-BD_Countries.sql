@@ -1782,17 +1782,102 @@ BEGIN
 END //
 DELIMITER ;
 
-#WORKERREVIEW
-#################################################
-CALL CWorkerReview(1, 1, @result);
-SELECT @result;
-CALL RWorkerReview(NULL, NULL, NULL, NULL);
-CALL UWorkerReview(1, NULL, NULL, NULL, @result);
-SELECT @result;
-CALL DWorkerReview(1,@result);
-SELECT @result;
-SELECT * FROM WorkerReview;
-#################################################
+##################################################################################################
+# CRUD Qualification
+##################################################################################################
+
+DELIMITER //
+CREATE PROCEDURE CQualification (IN pIdWorkerReview INT, IN pQualDescription VARCHAR(200), OUT result VARCHAR(16383))
+BEGIN
+	IF (pIdWorkerReview IS NOT NULL AND pQualDescription IS NOT NULL) THEN
+		BEGIN
+			IF ((SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
+				BEGIN
+					IF (pQualDescription != "") THEN
+						BEGIN
+							INSERT INTO Qualification (idWorkerReview, qualDescription) VALUES
+							(pIdWorkerReview, pQualDescription);
+							SET result = "The Qualification has been added";
+						END;
+					ELSE
+						SET result = "The Qualification can´t be empty";
+					END IF;
+				END;
+			ELSE
+				SET result = "The Worker Review ID specified doesn´t exists";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RQualification (IN pIdQualification INT, IN pIdWorkerReview INT, IN pQualDescription VARCHAR(200))
+BEGIN
+	SELECT idQualification AS 'Qualification ID', idWorkerReview AS 'Worker Review ID',
+    qualDescription AS 'Qualification Description'
+    FROM Qualification WHERE idQualification = IFNULL(pIdQualification, idQualification)
+    AND idWorkerReview = IFNULL(pIdWorkerReview, idWorkerReview)
+    AND qualDescription = IFNULL(pQualDescription, qualDescription);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UQualification (IN pIdQualification INT, IN pIdWorkerReview INT, IN pQualDescription VARCHAR(200), OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdQualification IS NOT NULL AND (SELECT COUNT(idQualification) FROM Qualification WHERE idQualification = pIdQualification) > 0) THEN
+		BEGIN
+			IF (pIdWorkerReview IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
+						BEGIN
+							UPDATE Qualification SET idWorkerReview = pIdWorkerReview WHERE idQualification = pIdQualification;
+							SET result = CONCAT(result, 'The Worker Review ID has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT('The Worker Review ID specified doesn´t exists\n');
+					END IF;
+                END;
+			END IF;
+            IF (pQualDescription IS NOT NULL) THEN
+				BEGIN
+					IF (pQualDescription != "") THEN
+						BEGIN
+							UPDATE Qualification SET qualDescription = pQualDescription WHERE idQualification = pIdQualification;
+							SET result = CONCAT(result, 'The Qualification has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT('The Qualification can´t be empty\n');
+					END IF;
+				END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Worker Review ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DQualification (IN pIdQualification INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idQualification) FROM Qualification WHERE idQualification = pIdQualification) > 0) THEN
+		BEGIN
+			DELETE FROM Qualification WHERE idQualification = pIdQualification;
+            SET result = "The Qualification has been removed";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The Qualification ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+
 
 
 ##TEMPLATE
@@ -2120,9 +2205,31 @@ SELECT @result;
 SELECT * FROM ClientMembership;
 #################################################
 
+#WORKERREVIEW
+#################################################
+CALL CWorkerReview(1, 1, @result);
+SELECT @result;
+CALL RWorkerReview(NULL, NULL, NULL, NULL);
+CALL UWorkerReview(1, NULL, NULL, NULL, @result);
+SELECT @result;
+CALL DWorkerReview(1,@result);
+SELECT @result;
+SELECT * FROM WorkerReview;
+#################################################
 
-
-
+#QUALIFICATION
+#################################################
+CALL CQualification(1, "I don't like him", @result);
+SELECT @result;
+CALL CQualification(1, "I like him", @result);
+SELECT @result;
+CALL RQualification(NULL, NULL, NULL);
+CALL UQualification(1, NULL, "I like him", @result);
+SELECT @result;
+CALL DQualification(2,@result);
+SELECT @result;
+SELECT * FROM Qualification;
+#################################################
 
 
 

@@ -205,7 +205,8 @@ CREATE TABLE Review
     revDescription VARCHAR(200) NOT NULL,
     idClientUser INT NOT NULL,
     CONSTRAINT fk_ReviewClientUser FOREIGN KEY(idClientUser)
-    REFERENCES ClientUser(idClientUser)
+    REFERENCES ClientUser(idClientUser),
+    revDate DATE NOT NULL
 );
 
 CREATE TABLE WorkerReview

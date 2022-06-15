@@ -1979,6 +1979,164 @@ BEGIN
 END //
 DELIMITER ;
 
+##################################################################################################
+# CRUD Review
+##################################################################################################
+
+DELIMITER //
+CREATE PROCEDURE CReview (IN pIdProduct INT, IN pScore INT, IN pRevDescription VARCHAR(200), IN pIdClientUser INT, OUT result VARCHAR(16383))
+BEGIN
+	IF (pIdProduct IS NOT NULL AND pScore IS NOT NULL AND pRevDescription IS NOT NULL AND pIdClientUser IS NOT NULL) THEN
+	BEGIN
+			IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
+				BEGIN
+					IF (pScore BETWEEN 1 AND 5) THEN
+						BEGIN
+							IF (pRevDescription != "") THEN
+								BEGIN
+									IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+										BEGIN
+											#CHECKS IF USER DOESN´T HAVE ALREADY A REVIEW ON THE SPECIFIED PRODUCT
+											IF ((SELECT COUNT(idReview) FROM Review WHERE idProduct = pIdProduct AND idClientUser = pIdClientUser) = 0) THEN
+												BEGIN
+													INSERT INTO Review (idProduct, score, revDescription, idClientUser, revDate) VALUES
+													(pIdProduct, pScore, pRevDescription, pIdClientUser, CURRENT_DATE());
+													SET result = "The Review has been added";
+												END;
+											ELSE
+												SET result = "The Client User ID specified already has a review in this product";
+											END IF;
+										END;
+									ELSE
+										SET result = "The Client User ID specified doesn´t exists";
+									END IF;
+								END;
+							ELSE
+								SET result = "The Review Description can´t be empty";
+							END IF;
+						END;
+					ELSE
+						SET result = "The Score needs to be between 1 and 5";
+					END IF;
+				END;               
+			ELSE
+				SET result = "The Product ID specified doesn´t exists";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RReview (IN pIdReview INT, IN pIdProduct INT, IN pScore INT, IN pRevDescription VARCHAR(200), IN pIdClientUser INT, IN pRevDate DATE)
+BEGIN
+	SELECT idReview AS 'Review ID', idProduct AS 'Product ID', score AS 'Score',
+	revDescription AS 'Review Description',idClientUser AS 'Client User ID', revDate AS 'Review Date'
+    FROM Review WHERE idReview = IFNULL(pIdReview, idReview) AND idProduct = IFNULL(pIdProduct, idProduct)
+    AND score = IFNULL(pScore, score) AND revDescription = IFNULL(pRevDescription, revDescription)
+    AND idClientUser = IFNULL(pIdClientUser, idClientUser) AND revDate = IFNULL(pRevDate, revDate);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UReview (IN pIdReview INT, IN pIdProduct INT, IN pScore INT, IN pRevDescription VARCHAR(200), IN pIdClientUser INT, IN pRevDate DATE, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdReview IS NOT NULL AND (SELECT COUNT(idReview) FROM Review WHERE idReview = pIdReview) > 0) THEN
+		BEGIN
+			IF (pIdProduct IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
+						BEGIN
+							IF ((SELECT COUNT(idReview) FROM Review WHERE idProduct = pIdProduct AND idClientUser = 
+								(SELECT idClientUser FROM Review WHERE idReview = pIdReview)) = 0) THEN
+								BEGIN
+									UPDATE Review SET idProduct = pIdProduct WHERE idReview = pIdReview;
+									SET result = CONCAT(result, 'The Product ID has been modified\n');
+								END;
+							ELSE
+								SET result = CONCAT('The Client User ID specified on this Review ID already has a review in this product\n');
+							END IF;
+						END;
+					ELSE
+						SET result = CONCAT('The Product ID specified doesn´t exists\n');
+					END IF;
+                END;
+			END IF;
+            IF (pScore IS NOT NULL) THEN
+				BEGIN
+					IF (pScore BETWEEN 1 AND 5) THEN
+						BEGIN
+							UPDATE Review SET score = pScore WHERE idReview = pIdReview;
+							SET result = CONCAT(result, 'The Score has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT('The Score needs to be between 1 and 5\n');
+					END IF;
+				END;
+			END IF;
+            IF (pRevDescription IS NOT NULL) THEN
+				BEGIN
+					IF (pRevDescription != "") THEN
+						BEGIN
+							UPDATE Review SET revDescription = pRevDescription WHERE idReview = pIdReview;
+							SET result = CONCAT(result, 'The Review Description has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT('The Review Description can´t be empty\n');
+					END IF;
+				END;
+			END IF;
+            IF (pIdClientUser IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+						BEGIN
+							UPDATE Review SET idClientUser = pIdClientUser WHERE idReview = pIdReview;
+							SET result = CONCAT(result, 'The Client User ID has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT('The Client User ID specified doesn´t exists\n');
+					END IF;
+                END;
+			END IF;
+            IF (pRevDate IS NOT NULL) THEN
+				BEGIN
+					IF (pRevDate <= CURRENT_DATE()) THEN
+						BEGIN
+							UPDATE Review SET revDate = pRevDate WHERE idReview = pIdReview;
+							SET result = CONCAT(result, 'The Review Date has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT('The Review Date can´t be greater than actual date\n');
+					END IF;
+				END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Review ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DReview (IN pIdReview INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idReview) FROM Review WHERE idReview = pIdReview) > 0) THEN
+		BEGIN
+			DELETE FROM Review WHERE idReview = pIdReview;
+            SET result = "The Review has been removed";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The Review ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+
 
 ##TEMPLATE
 
@@ -2345,7 +2503,17 @@ SELECT @result;
 SELECT * FROM Complaint;
 #################################################
 
-
+#REVIEW
+#################################################
+CALL CReview(1, 4, "Insane", 1, @result);
+SELECT @result;
+CALL RReview(NULL, NULL, NULL, NULL, NULL, NULL);
+CALL UReview(1, NULL, 5, NULL, NULL, NULL, @result);
+SELECT @result;
+CALL DReview(1,@result);
+SELECT @result;
+SELECT * FROM Review;
+#################################################
 
 
 

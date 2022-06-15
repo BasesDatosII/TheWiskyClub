@@ -34,7 +34,8 @@ CREATE TABLE Membership
     nameMembership VARCHAR(30) NOT NULL,
     cost DECIMAL(15,2) NOT NULL,
     productDiscount FLOAT NOT NULL,
-    deliveryDiscount FLOAT NOT NULL
+    deliveryDiscount FLOAT NOT NULL,
+    isActive BIT NOT NULL #1 = ACTIVE, 0 = NON ACTIVE
 );
 
 CREATE TABLE Presentation

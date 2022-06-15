@@ -1441,7 +1441,154 @@ BEGIN
 END //
 DELIMITER ;
 
+##################################################################################################
+# CRUD Membership
+##################################################################################################
 
+DELIMITER //
+CREATE PROCEDURE CMembership (IN pNameMembership VARCHAR(30), IN pCost DECIMAL(15,2), IN pProductDiscount FLOAT, IN pDeliveryDiscount FLOAT, OUT result VARCHAR(16383))
+BEGIN
+	IF (pNameMembership IS NOT NULL AND pCost IS NOT NULL AND pProductDiscount IS NOT NULL AND pDeliveryDiscount IS NOT NULL) THEN
+	BEGIN
+			IF ((SELECT COUNT(idMembership) FROM Membership WHERE nameMembership = pNameMembership) = 0 AND pNameMembership != "") THEN
+				BEGIN
+					IF (pCost > 0) THEN
+						BEGIN
+							IF (pProductDiscount > 0) THEN
+								BEGIN
+									IF (pDeliveryDiscount >= 0) THEN
+										BEGIN
+											INSERT INTO Membership (nameMembership, cost, productDiscount, deliveryDiscount, isActive) VALUES
+											(pNameMembership, pCost, pProductDiscount, pDeliveryDiscount, 1);
+											SET result = "The Membership has been added";
+										END;
+									ELSE
+										SET result = "The Delivery Discount needs to be greater or equal than 0";
+									END IF;
+								END;
+							ELSE
+								SET result = "The Product Discount needs to be greater than 0";
+							END IF;
+						END;
+					ELSE
+						SET result = "The Cost needs to be greater than 0";
+					END IF;
+				END;               
+			ELSE
+				SET result = "There's already a Membership with that name or the name can't be empty";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RMembership (IN pIdMembership INT, IN pNameMembership VARCHAR(30), IN pCost DECIMAL(15,2), IN pProductDiscount FLOAT, IN pDeliveryDiscount FLOAT, IN pIsActive BIT)
+BEGIN
+	SELECT idMembership AS 'Membership ID', nameMembership AS 'Membership Name', cost AS 'Cost',
+	productDiscount AS 'Product Discount', deliveryDiscount AS 'Delivery Discount', isActive AS 'Active'
+    FROM Membership WHERE idMembership = IFNULL(pIdMembership, idMembership) AND nameMembership = IFNULL(pNameMembership, nameMembership)
+    AND cost = IFNULL(pCost, cost) AND productDiscount = IFNULL(pProductDiscount, productDiscount)
+    AND deliveryDiscount = IFNULL(pDeliveryDiscount, deliveryDiscount);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UMembership (IN pIdMembership INT, IN pNameMembership VARCHAR(30), IN pCost DECIMAL(15,2), IN pProductDiscount FLOAT, IN pDeliveryDiscount FLOAT, IN pIsActive BIT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdMembership IS NOT NULL AND (SELECT COUNT(idMembership) FROM Membership WHERE idMembership = pIdMembership) > 0) THEN
+		BEGIN
+			IF (pNameMembership IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idMembership) FROM Membership WHERE nameMembership = pNameMembership) > 0 AND pNameMembership != "") THEN
+						BEGIN
+							UPDATE Membership SET nameMembership = pNameMembership WHERE idMembership = pIdMembership;
+							SET result = CONCAT(result, 'The Membership Name has been modified\n');
+						END;
+					ELSE
+						SET result = "There's already a Membership with that name or the name can't be empty";
+					END IF;
+                END;
+			END IF;
+            IF (pCost IS NOT NULL) THEN
+				BEGIN
+					IF (pCost > 0) THEN
+						BEGIN
+							UPDATE Membership SET cost = pCost WHERE idMembership = pIdMembership;
+							SET result = CONCAT(result, 'The Cost has been modified\n');
+						END;
+					ELSE
+						SET result = "The Cost needs to be greater than 0";
+					END IF;
+                END;
+			END IF;
+            IF (pProductDiscount IS NOT NULL) THEN
+				BEGIN
+					IF (pProductDiscount > 0) THEN
+						BEGIN
+							UPDATE Membership SET productDiscount = pProductDiscount WHERE idMembership = pIdMembership;
+							SET result = CONCAT(result, 'The Product Discount has been modified\n');
+						END;
+					ELSE
+						SET result = "The Product Discount needs to be greater than 0";
+					END IF;
+                END;
+			END IF;
+            IF (pDeliveryDiscount IS NOT NULL) THEN
+				BEGIN
+					IF (pDeliveryDiscount >= 0) THEN
+						BEGIN
+							UPDATE Membership SET deliveryDiscount = pDeliveryDiscount WHERE idMembership = pIdMembership;
+							SET result = CONCAT(result, 'The Delivery Discount has been modified\n');
+						END;
+					ELSE
+						SET result = "The Delivery Discount needs to be greater or equal than 0";
+					END IF;
+                END;
+			END IF;
+			IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
+				BEGIN
+					UPDATE Membership SET isActive = pIsActive WHERE idMembership = pIdMembership;
+                    SET result = CONCAT(result, 'The Membership is now active\n');
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Membership ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DMembership (IN pIdMembership INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idMembership) FROM Membership WHERE idMembership = pIdMembership) > 0) THEN
+		BEGIN
+			UPDATE Membership SET isActive = 0 WHERE idMembership = pIdMembership;
+            SET result = "The Client Information is now inactive";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+#
+#################################################
+CALL CMembership("Tier Short Glass", 10, 5, 0, @result);
+SELECT @result;
+CALL RMembership(NULL, NULL, NULL, NULL, NULL, NULL);
+CALL UMembership(1, NULL, NULL, NULL, NULL, 1, @result);
+SELECT @result;
+CALL DMembership(1,@result);
+SELECT @result;
+SELECT * FROM Membership;
+#################################################
 
 
 

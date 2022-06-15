@@ -341,7 +341,7 @@ BEGIN
 													IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
 														BEGIN
 															INSERT INTO Product (productName, cost, idProductType, image, idSupplier, idPresentation, idCash, isActive, entryDate, tier)
-                                                            VALUES (pProductName, pCost, pIdProductType, pImage, pIdSupplier, pIdPresentation, pIdCash, 1, current_date(), pTier);
+                                                            VALUES (pProductName, pCost, pIdProductType, pImage, pIdSupplier, pIdPresentation, pIdCash, 1, CURRENT_DATE(), pTier);
 															SET result = "The Presentation has been added";
                                                         END;
 													ELSE
@@ -952,7 +952,7 @@ BEGIN
 								BEGIN
 									IF (pPhoneNumber BETWEEN 60000000 AND 89999999) THEN
 										BEGIN
-											IF (pBirthDate < current_date()) THEN
+											IF (pBirthDate < CURRENT_DATE()) THEN
 												BEGIN
 													INSERT INTO InfoPeople (peopleName, surname, email, phoneNumber, birthDate, isActive)
 													VALUES (pPeopleName, pSurname, pEmail, pPhoneNumber, pBirthDate, 1);
@@ -1051,7 +1051,7 @@ BEGIN
 			END IF;
             IF (pBirthDate IS NOT NULL) THEN
 				BEGIN
-					IF (pBirthDate < current_date()) THEN
+					IF (pBirthDate < CURRENT_DATE()) THEN
 						BEGIN
 							UPDATE InfoPeople SET birthDate = pBirthDate WHERE idInfoPeople = pIdInfoPeople;
 							SET result = CONCAT(result, 'The Birth Date has been modified\n');
@@ -1206,6 +1206,76 @@ DELIMITER ;
 
 ##################################################################################################
 
+
+#OPEN ORDER
+DELIMITER //
+CREATE PROCEDURE OpenOrder(IN pIdClientUser INT, IN pIdClub INT, IN pIdEmployer INT, IN pIdMailer INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+		BEGIN
+			IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+				BEGIN
+					INSERT INTO OrderP (idClientPeople, orderDate, idClub, idEmployer, idMailer) VALUES
+                    ((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser WHERE CP.idClientUser = pIdClientUser),
+                    CURRENT_DATE(), pIdClub, pIdEmployer, pIdMailer);
+                    SET result = LAST_INSERT_ID();
+                END;
+			ELSE
+				SET result = "The Club ID specified doesn´t exists";
+            END IF;
+        END;
+	ELSE
+		SET result = "The Client User ID specified doesn´t exists";
+	END IF;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE BuyProduct(IN pIdOrderP INT, IN pIdProduct INT, IN pAmount INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idOrderP) FROM OrderP WHERE idOrderP = pIdOrderP) > 0) THEN
+		BEGIN
+			IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
+				BEGIN
+					IF (pAmount > 0) THEN
+						BEGIN
+							START TRANSACTION;
+								SET @idClub = (SELECT idClub FROM OrderP WHERE idOrderP = pIdOrderP);
+								IF ((SELECT isActive FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub) = 1) THEN
+									BEGIN
+										SET @cantAct = (SELECT stock - pAmount FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub);
+                                        IF (@cantAct >= 0) THEN
+											BEGIN
+												INSERT INTO OrderLine (idOrderP, idProduct, cost, amount) VALUES
+                                                (pIdOrderP, pIdProduct, (SELECT cost FROM Product WHERE idProduct = pIdProduct), pAmount);
+                                                UPDATE Inventory SET stock = @cantAct WHERE idProduct = pIdProduct AND idClub = @idClub;
+                                                SET result = "Product bought succesfully";
+                                            END;
+										ELSE
+											SET result = "The inventory of that product doesn´t has enough stock";
+										END IF;
+                                    END;
+								ELSE
+									SET result = "The inventory of that product is currently inactive";
+								END IF;
+                            COMMIT;
+                        END;
+					ELSE
+						SET result = "The amount needs to be greater than 0";
+                    END IF;
+                END;
+			ELSE
+				SET result = "The Product ID specified doesn´t exists";
+            END IF;
+        END;
+	ELSE
+		SET result = "The Order ID specified doesn´t exists";
+    END IF;
+END //
+DELIMITER ;
+
+##################################################################################################
+
 #PRODUCT TYPE
 #################################################
 CALL CProductType('Tabaco', @result);
@@ -1343,6 +1413,23 @@ SELECT @result;
 SELECT * FROM ClientPeople;
 #################################################
 
+#OPENORDER
+#################################################
+CALL OpenOrder(1, 1, 1, 2, @result);
+SELECT @result;
+SELECT * FROM OrderP;
+#################################################
+
+#BUYPRODUCT
+#################################################
+CALL BuyProduct(1, 1, 5, @result);
+SELECT @result;
+SELECT * FROM OrderLine;
+#################################################
+
+
+
+
 ##TEMPLATE
 
 ##################################################################################################
@@ -1384,8 +1471,3 @@ CALL D(,@result);
 SELECT @result;
 SELECT * FROM ;
 #################################################
-
-
-
-#OPEN ORDER
-CREATE PROCEDURE OpenOrder(

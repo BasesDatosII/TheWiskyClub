@@ -110,7 +110,8 @@ CREATE TABLE InfoPeople
     surname VARCHAR(30) NOT NULL,
     email VARCHAR(50) NOT NULL,
     phoneNumber INT NOT NULL,
-    birthDate DATE NOT NULL
+    birthDate DATE NOT NULL,
+    isActive BIT NOT NULL #1 = ACTIVE, 0 = NON ACTIVE
 );
 
 CREATE TABLE CreditCard

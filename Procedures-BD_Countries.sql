@@ -935,15 +935,171 @@ BEGIN
 END //
 DELIMITER ;
 
+##################################################################################################
+# CRUD InfoPeople
+##################################################################################################
+
+DELIMITER //
+CREATE PROCEDURE CInfoPeople (IN pPeopleName VARCHAR(20), IN pSurname VARCHAR(30), IN pEmail VARCHAR(50), IN pPhoneNumber INT, IN pBirthDate DATE, OUT result VARCHAR(16383))
+BEGIN
+	IF (pPeopleName IS NOT NULL AND pSurname IS NOT NULL AND pEmail IS NOT NULL AND pPhoneNumber IS NOT NULL AND pBirthDate IS NOT NULL) THEN
+	BEGIN
+			IF (pPeopleName != "") THEN
+				BEGIN
+					IF (pSurname != "") THEN
+						BEGIN
+							IF (pEmail != "") THEN
+								BEGIN
+									IF (pPhoneNumber BETWEEN 60000000 AND 89999999) THEN
+										BEGIN
+											IF (pBirthDate < current_date()) THEN
+												BEGIN
+													INSERT INTO InfoPeople (peopleName, surname, email, phoneNumber, birthDate, isActive)
+													VALUES (pPeopleName, pSurname, pEmail, pPhoneNumber, pBirthDate, 1);
+                                                    SET result = "The Client Information has been stored";
+												END;
+											ELSE
+												SET result = "The Birth Date can't be greater or equal than the actual Date";
+                                            END IF;
+										END;
+									ELSE
+										SET result = "The Phone Number specified needs to be between 60000000 and 89999999";
+									END IF;
+								END;
+							ELSE
+								SET result = "The email can't be empty";
+							END IF;
+						END;
+					ELSE
+						SET result = "The Surname can't be empty";
+					END IF;
+				END;
+			ELSE
+				SET result = "The Name can't be empty";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RInfoPeople (IN pIdInfoPeople INT, IN pPeopleName VARCHAR(20), IN pSurname VARCHAR(30), IN pEmail VARCHAR(50), IN pPhoneNumber INT, IN pBirthDate DATE, IN pIsActive INT)
+BEGIN
+	SELECT idInfoPeople AS 'Client´s Information ID', peopleName AS 'Name', surname AS 'Surname',
+		email AS 'Email', phoneNumber AS 'Phone Number', birthDate AS 'Birth Date', isActive AS 'Active'
+    FROM InfoPeople WHERE idInfoPeople = IFNULL(pIdInfoPeople, idInfoPeople) AND peopleName = IFNULL(pPeopleName, peopleName)
+    AND surname = IFNULL(pSurname, surname) AND email = IFNULL(pEmail, email) AND phoneNumber = IFNULL(pPhoneNumber, phoneNumber)
+	AND birthDate = IFNULL(pBirthDate, birthDate) AND isActive = IFNULL(pIsActive, isActive);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UInfoPeople (IN pIdInfoPeople INT, IN pPeopleName VARCHAR(20), IN pSurname VARCHAR(30), IN pEmail VARCHAR(50), IN pPhoneNumber INT, IN pBirthDate DATE, IN pIsActive BIT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdInfoPeople IS NOT NULL AND (SELECT COUNT(idInfoPeople) FROM InfoPeople WHERE idInfoPeople = pIdInfoPeople) > 0) THEN
+		BEGIN
+			IF (pPeopleName IS NOT NULL) THEN
+				BEGIN
+					IF (pPeopleName != "") THEN
+						BEGIN
+							UPDATE InfoPeople SET peopleName = pPeopleName WHERE idInfoPeople = pIdInfoPeople;
+							SET result = CONCAT(result, 'The Name has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT(result, 'The Name can´t be empty\n');
+					END IF;
+                END;
+			END IF;
+            IF (pSurname IS NOT NULL) THEN
+				BEGIN
+					IF (pSurname != "") THEN
+						BEGIN
+							UPDATE InfoPeople SET surname = pSurname WHERE idInfoPeople = pIdInfoPeople;
+							SET result = CONCAT(result, 'The Surname has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT(result, 'The Surname can´t be empty\n');
+					END IF;
+                END;
+			END IF;
+            IF (pEmail IS NOT NULL) THEN
+				BEGIN
+					IF (pEmail != "") THEN
+						BEGIN
+							UPDATE InfoPeople SET email = pEmail WHERE idInfoPeople = pIdInfoPeople;
+							SET result = CONCAT(result, 'The Email has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT(result, 'The Email can´t be empty\n');
+					END IF;
+                END;
+			END IF;
+            IF (pPhoneNumber IS NOT NULL) THEN
+				BEGIN
+					IF (pPhoneNumber BETWEEN 60000000 AND 89999999) THEN
+						BEGIN
+							UPDATE InfoPeople SET phoneNumber = pPhoneNumber WHERE idInfoPeople = pIdInfoPeople;
+							SET result = CONCAT(result, 'The Phone Number has been modified\n');
+						END;
+					ELSE
+						SET result = "The Phone Number specified needs to be between 60000000 and 89999999";
+					END IF;
+                END;
+			END IF;
+            IF (pBirthDate IS NOT NULL) THEN
+				BEGIN
+					IF (pBirthDate < current_date()) THEN
+						BEGIN
+							UPDATE InfoPeople SET birthDate = pBirthDate WHERE idInfoPeople = pIdInfoPeople;
+							SET result = CONCAT(result, 'The Birth Date has been modified\n');
+						END;
+					ELSE
+						SET result = "The Birth Date can't be greater or equal than the actual Date";
+					END IF;
+                END;
+			END IF;
+            IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
+				BEGIN
+					UPDATE InfoPeople SET isActive = pIsActive WHERE idInfoPeople = pIdInfoPeople;
+                    SET result = CONCAT(result, 'The Client Information is now active\n');
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Info People ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DInfoPeople (IN pIdInfoPeople INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idInfoPeople) FROM InfoPeople WHERE idInfoPeople = pIdInfoPeople) > 0) THEN
+		BEGIN
+			UPDATE InfoPeople SET isActive = 0 WHERE idInfoPeople = pIdInfoPeople;
+            SET result = "The Client Information is now inactive";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+#INFOPEOPLE
 #################################################
-CALL CClientUser("Password", @result);
+CALL CInfoPeople("Daniel", "Araya Sambucci", "danielarayasambucci@gmail.com", 70145250, "2002-03-10", @result);
 SELECT @result;
-CALL RClientUser(NULL,NULL,NULL);
-CALL UClientUser(1,NULL,1, @result);
+CALL RInfoPeople(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+CALL UInfoPeople(1, NULL, NULL, NULL, NULL, NULL, 1, @result);
 SELECT @result;
-CALL DClientUser(1,@result);
+CALL DInfoPeople(1,@result);
 SELECT @result;
-SELECT * FROM ClientUser;
+SELECT * FROM InfoPeople;
 #################################################
 
 ##################################################################################################
@@ -1049,7 +1205,17 @@ SELECT @result;
 SELECT * FROM Inventory;
 #################################################
 
-
+#CLIENT USER
+#################################################
+CALL CClientUser("Password", @result);
+SELECT @result;
+CALL RClientUser(NULL,NULL,NULL);
+CALL UClientUser(1,NULL,1, @result);
+SELECT @result;
+CALL DClientUser(1,@result);
+SELECT @result;
+SELECT * FROM ClientUser;
+#################################################
 
 ##TEMPLATE
 
@@ -1081,6 +1247,7 @@ BEGIN
 END //
 DELIMITER ;
 
+#
 #################################################
 CALL C(, @result);
 SELECT @result;

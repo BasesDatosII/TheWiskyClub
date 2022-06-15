@@ -1687,7 +1687,112 @@ BEGIN
 END //
 DELIMITER ;
 
+##################################################################################################
+# CRUD WorkerReview
+##################################################################################################
 
+DELIMITER //
+CREATE PROCEDURE CWorkerReview (IN pIdClientUser INT, IN pIdWorker INT, OUT result VARCHAR(16383))
+BEGIN
+	IF (pIdClientUser IS NOT NULL AND pIdWorker IS NOT NULL) THEN
+		BEGIN
+			IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+				BEGIN
+					INSERT INTO WorkerReview (idClientUser, idWorker, dateWR) VALUES
+					(pIdClientUser, pIdWorker, CURRENT_DATE());
+					SET result = "The Worker Review has been added";
+				END;
+			ELSE
+				SET result = "The Client User ID specified doesn´t exists";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RWorkerReview (IN pIdWorkerReview INT, IN pIdClientUser INT, IN pIdWorker INT, IN pDateWR DATE)
+BEGIN
+	SELECT idWorkerReview AS 'Worker Review ID', idClientUser AS 'Client User ID',
+    idWorker AS 'Worker ID', dateWR AS 'Worker Review Date'
+    FROM WorkerReview WHERE idWorkerReview = IFNULL(pIdWorkerReview, idWorkerReview)
+    AND idClientUser = IFNULL(pIdClientUser, idClientUser) AND idWorker = IFNULL(pIdWorker, idWorker)
+    AND dateWR = IFNULL(pDateWR, dateWR);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UWorkerReview (IN pIdWorkerReview INT, IN pIdClientUser INT, IN pIdWorker INT, IN pDateWR DATE, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdWorkerReview IS NOT NULL AND (SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
+		BEGIN
+			IF (pIdClientUser IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+						BEGIN
+							UPDATE WorkerReview SET idClientUser = pIdClientUser WHERE idWorkerReview = pIdWorkerReview;
+							SET result = CONCAT(result, 'The Client User ID has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT('The Client User ID specified doesn´t exists\n');
+					END IF;
+                END;
+			END IF;
+            IF (pIdWorker IS NOT NULL) THEN
+				BEGIN
+					UPDATE WorkerReview SET idWorker = pIdWorker WHERE idWorkerReview = pIdWorkerReview;
+					SET result = CONCAT(result, 'The Worker ID has been modified\n');
+				END;
+			END IF;
+            IF (pDateWR IS NOT NULL) THEN
+				BEGIN
+					IF (pDateWR <= CURRENT_DATE()) THEN
+						BEGIN
+							UPDATE WorkerReview SET dateWR = pDateWR WHERE idWorkerReview = pIdWorkerReview;
+							SET result = CONCAT(result, 'The Worker Review Date has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT('The Worker Review Date can´t be greater than actual date\n');
+					END IF;
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Worker Review ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DWorkerReview (IN pIdWorkerReview INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
+		BEGIN
+			DELETE FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview;
+            SET result = "The Worker Review has been removed";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The Worker Review ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+#WORKERREVIEW
+#################################################
+CALL CWorkerReview(1, 1, @result);
+SELECT @result;
+CALL RWorkerReview(NULL, NULL, NULL, NULL);
+CALL UWorkerReview(1, NULL, NULL, NULL, @result);
+SELECT @result;
+CALL DWorkerReview(1,@result);
+SELECT @result;
+SELECT * FROM WorkerReview;
+#################################################
 
 
 ##TEMPLATE

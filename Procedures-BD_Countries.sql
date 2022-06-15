@@ -700,7 +700,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Delivery Cost Proportion has been modified\n');
 						END;
 					ELSE
-						SET result = 'The Delivery Cost Proportion needs to be greater than 0\n';
+						SET result = CONCAT('The Delivery Cost Proportion needs to be greater than 0\n');
 					END IF;
                 END;
 			END IF;
@@ -824,7 +824,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Stock has been modified\n');
 						END;
 					ELSE
-						SET result = 'The Stock needs to be greater than 0\n';
+						SET result = CONCAT('The Stock needs to be greater than 0\n');
 					END IF;
                 END;
 			END IF;
@@ -900,10 +900,10 @@ BEGIN
 				##IF () THEN HERE GOES THE VALIDATION OF THE FORMAT
 					BEGIN
 						UPDATE ClientUser SET userPassword = pUserPassword WHERE idClientUser = pIdClientUser;
-						SET result = 'The User has been added\n';
+						SET result = CONCAT('The User has been added\n');
 					END;
 				#ELSE
-					#SET result = "The User Password format is incorrect";
+					#SET result = CONCAT('The User Password format is incorrect\n');
 				#END IF;
 			END IF;
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
@@ -1045,7 +1045,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Phone Number has been modified\n');
 						END;
 					ELSE
-						SET result = 'The Phone Number specified needs to have 8 digits\n';
+						SET result = CONCAT('The Phone Number specified needs to have 8 digits\n');
 					END IF;
                 END;
 			END IF;
@@ -1057,7 +1057,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Birth Date has been modified\n');
 						END;
 					ELSE
-						SET result = 'The Birth Date can´t be greater or equal than the actual Date\n';
+						SET result = CONCAT('The Birth Date can´t be greater or equal than the actual Date\n');
 					END IF;
                 END;
 			END IF;
@@ -1145,7 +1145,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Client User ID has been modified\n');
 						END;
 					ELSE
-						SET result = 'The Client User ID specified doesn´t exists\n';
+						SET result = CONCAT('The Client User ID specified doesn´t exists\n');
 					END IF;
                 END;
 			END IF;
@@ -1157,7 +1157,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Info People ID has been modified\n');
 						END;
 					ELSE
-						SET result = 'The Info People ID specified doesn´t exists\n';
+						SET result = CONCAT('The Info People ID specified doesn´t exists\n');
 					END IF;
                 END;
 			END IF;
@@ -1169,7 +1169,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Sales Counter has been modified\n');
 						END;
 					ELSE
-						SET result = 'The Sales Counter can´t be lower than 0\n';
+						SET result = CONCAT('The Sales Counter can´t be lower than 0\n');
 					END IF;
                 END;
 			END IF;
@@ -1277,7 +1277,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Info People ID has been modified\n');
 						END;
 					ELSE
-						SET result = 'The Info People ID specified doesn´t exists\n';
+						SET result = CONCAT('The Info People ID specified doesn´t exists\n');
 					END IF;
                 END;
 			END IF;
@@ -1291,11 +1291,11 @@ BEGIN
 									SET result = CONCAT(result, 'The Card Number has been modified\n');
 								END;
 							ELSE
-								SET result = 'That Card Number is already in the system\n';
+								SET result = CONCAT('That Card Number is already in the system\n');
                             END IF;
 						END;
 					ELSE
-						SET result = 'The Card Number needs to have between 13 and 18 digits\n';
+						SET result = CONCAT('The Card Number needs to have between 13 and 18 digits\n');
 					END IF;
                 END;
 			END IF;
@@ -1307,7 +1307,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Expiration Date has been modified\n');
 						END;
 					ELSE
-						SET result = 'The Card is expired\n';
+						SET result = CONCAT('The Card is expired\n');
 					END IF;
                 END;
 			END IF;
@@ -1319,7 +1319,7 @@ BEGIN
 							SET result = CONCAT(result, 'The CVV has been modified\n');
 						END;
 					ELSE
-						SET result = 'The CVV needs to have between 3 and 4 digits\n';
+						SET result = CONCAT('The CVV needs to have between 3 and 4 digits\n');
 					END IF;
                 END;
 			END IF;
@@ -1402,7 +1402,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Client People ID has been modified\n');
 						END;
 					ELSE
-						SET result = 'The Client People ID specified doesn´t exists\n';
+						SET result = CONCAT('The Client People ID specified doesn´t exists\n');
 					END IF;
                 END;
 			END IF;
@@ -1414,7 +1414,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Client Location ID has been modified\n');
 						END;
 					ELSE
-						SET result = 'The Location ID specified doesn´t exists\n';
+						SET result = CONCAT('The Location ID specified doesn´t exists\n');
 					END IF;
                 END;
 			END IF;
@@ -1509,7 +1509,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Membership Name has been modified\n');
 						END;
 					ELSE
-						SET result = "There's already a Membership with that name or the name can't be empty";
+						SET result = CONCAT('There´s already a Membership with that name or the name can´t be empty\n');
 					END IF;
                 END;
 			END IF;
@@ -1521,7 +1521,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Cost has been modified\n');
 						END;
 					ELSE
-						SET result = "The Cost needs to be greater than 0";
+						SET result = CONCAT('The Cost needs to be greater than 0\n');
 					END IF;
                 END;
 			END IF;
@@ -1533,7 +1533,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Product Discount has been modified\n');
 						END;
 					ELSE
-						SET result = "The Product Discount needs to be greater than 0";
+						SET result = CONCAT('The Product Discount needs to be greater than 0\n');
 					END IF;
                 END;
 			END IF;
@@ -1545,7 +1545,7 @@ BEGIN
 							SET result = CONCAT(result, 'The Delivery Discount has been modified\n');
 						END;
 					ELSE
-						SET result = "The Delivery Discount needs to be greater or equal than 0";
+						SET result = CONCAT('The Delivery Discount needs to be greater or equal than 0\n');
 					END IF;
                 END;
 			END IF;
@@ -1558,7 +1558,7 @@ BEGIN
             SET result = CONCAT(result, 'Changes made successfully \n');
 		END;
 	ELSE
-		SET result = "The Membership ID can't be NULL or the ID specified doesn´t exists";
+		SET result = 'The Membership ID can´t be NULL or the ID specified doesn´t exists\n';
 	END IF;
 END //
 DELIMITER ;
@@ -1578,18 +1578,114 @@ BEGIN
 END //
 DELIMITER ;
 
-#
-#################################################
-CALL CMembership("Tier Short Glass", 10, 5, 0, @result);
-SELECT @result;
-CALL RMembership(NULL, NULL, NULL, NULL, NULL, NULL);
-CALL UMembership(1, NULL, NULL, NULL, NULL, 1, @result);
-SELECT @result;
-CALL DMembership(1,@result);
-SELECT @result;
-SELECT * FROM Membership;
-#################################################
+##################################################################################################
+# CRUD ClientMembership
+##################################################################################################
 
+DELIMITER //
+CREATE PROCEDURE CClientMembership (IN pIdMembership INT, IN pIdClientUser INT, OUT result VARCHAR(16383))
+BEGIN
+	IF (pIdMembership IS NOT NULL AND pIdClientUser IS NOT NULL) THEN
+	BEGIN
+			IF ((SELECT COUNT(idMembership) FROM Membership WHERE idMembership = pIdMembership) > 0) THEN
+				BEGIN
+					IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
+						BEGIN
+							IF ((SELECT COUNT(idClientMembership) FROM ClientMembership WHERE idClientPeople =
+                            (SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser
+							WHERE CP.idClientUser = pIdClientUser)) = 0) THEN
+								BEGIN
+									INSERT INTO ClientMembership (idMembership, idClientPeople) VALUES
+									(pIdMembership, (SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser
+									WHERE CP.idClientUser = pIdClientUser));
+									SET result = "The Client Membership has been added";
+								END;
+							ELSE
+								SET result = "The Client already has a membership";
+							END IF;
+						END;
+					ELSE
+						SET result = "The Client User ID specified doesn´t exists";
+					END IF;
+				END;               
+			ELSE
+				SET result = "The Membership ID specified doesn´t exists";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RClientMembership (IN pIdClientMembership INT, IN pIdMembership INT, IN pIdClientPeople INT)
+BEGIN
+	SELECT idClientMembership AS 'Client Membership ID', idMembership AS 'Membership ID',
+    idClientPeople AS 'Client People ID'
+    FROM ClientMembership WHERE idClientMembership = IFNULL(pIdClientMembership, idClientMembership)
+    AND idMembership = IFNULL(pIdMembership, idMembership) AND idClientPeople = IFNULL(pIdClientPeople, idClientPeople);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UClientMembership (IN pIdClientMembership INT, IN pIdMembership INT, IN pIdClientPeople INT, OUT result VARCHAR(16383))
+BEGIN
+	SET result = "";
+	IF (pIdClientMembership IS NOT NULL AND (SELECT COUNT(idClientMembership) FROM ClientMembership WHERE idClientMembership = pIdClientMembership) > 0) THEN
+		BEGIN
+			IF (pIdMembership IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idMembership) FROM Membership WHERE idMembership = pIdMembership) > 0) THEN
+						BEGIN
+							UPDATE ClientMembership SET idMembership = pIdMembership WHERE idClientMembership = pIdClientMembership;
+							SET result = CONCAT(result, 'The Membership ID has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT('The Membership ID specified doesn´t exists\n');
+					END IF;
+                END;
+			END IF;
+            IF (pIdClientPeople IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idClientPeople) FROM ClientPeople WHERE idClientPeople = pIdClientPeople) > 0) THEN
+						BEGIN
+							IF ((SELECT COUNT(idClientMembership) FROM ClientMembership WHERE idClientPeople = pIdClientPeople) = 0) THEN
+								BEGIN
+									UPDATE ClientMembership SET idClientPeople = pIdClientPeople WHERE idClientMembership = pIdClientMembership;
+									SET result = CONCAT(result, 'The ClientPeople ID has been modified\n');
+								END;
+							ELSE
+								SET result = CONCAT('The Client People ID specified already has a membership\n');
+                            END IF;
+						END;
+					ELSE
+						SET result = CONCAT('The Client People ID specified doesn´t exists\n');
+					END IF;
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Client Membership ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DClientMembership (IN pIdClientMembership INT, OUT result VARCHAR(16383))
+BEGIN
+	IF ((SELECT COUNT(idClientMembership) FROM ClientMembership WHERE idClientMembership = pIdClientMembership) > 0) THEN
+		BEGIN
+			DELETE FROM ClientMembership WHERE idClientMembership = pIdClientMembership;
+            SET result = "The Client Membership has been removed";
+            #cascade here
+        END;
+	ELSE
+		SET result = "The Client Membership ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
 
 
 
@@ -1895,9 +1991,29 @@ SELECT @result;
 SELECT * FROM ClientLocation;
 #################################################
 
+#MEMBERSHIP
+#################################################
+CALL CMembership("Tier Short Glass", 10, 5, 0, @result);
+SELECT @result;
+CALL RMembership(NULL, NULL, NULL, NULL, NULL, NULL);
+CALL UMembership(1, NULL, NULL, NULL, NULL, 1, @result);
+SELECT @result;
+CALL DMembership(1,@result);
+SELECT @result;
+SELECT * FROM Membership;
+#################################################
 
-
-
+#CLIENTMEMBERSHIP
+#################################################
+CALL CClientMembership(1, 1, @result);
+SELECT @result;
+CALL RClientMembership(NULL, NULL, NULL);
+CALL UClientMembership(1, NULL, NULL, @result);
+SELECT @result;
+CALL DClientMembership(1,@result);
+SELECT @result;
+SELECT * FROM ClientMembership;
+#################################################
 
 
 

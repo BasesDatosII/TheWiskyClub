@@ -48,13 +48,14 @@ CREATE TABLE CashClub
 )
 GO
 
-CREATE TABLE EmployeerUser
+CREATE TABLE EmployeeUser
 (
-	idEmployeerUser INT PRIMARY KEY IDENTITY,
-	pasword VARCHAR(30) NOT NULL,
+	idEmployeeUser INT PRIMARY KEY,
+	pasword VARBINARY(8000) NOT NULL,
 	isActive BIT DEFAULT 1, --1 = ACTIVE, 0 = NON ACTIVE
 )
 GO
+
 
 CREATE TABLE Employee
 (
@@ -67,11 +68,11 @@ CREATE TABLE Employee
 	idJob INT NOT NULL,
 	CONSTRAINT fk_EmployeeJob FOREIGN KEY (idJob)
 	REFERENCES Job(idJob),
-	idEmployeerUser INT NOT NULL,
-	CONSTRAINT fk_EmployeeEmployeerUser FOREIGN KEY (idEmployeerUser)
-	REFERENCES EmployeerUser(idEmployeerUser),
+	idEmployeeUser INT NOT NULL,
+	CONSTRAINT fk_EmployeeEmployeeUser FOREIGN KEY (idEmployeeUser)
+	REFERENCES EmployeeUser(idEmployeeUser),
 	idCashClub INT NOT NULL,
 	CONSTRAINT fk_EmployeeCashClub FOREIGN KEY (idCashClub)
 	REFERENCES CashClub(idCashClub),
-	calification FLOAT NOT NULL
+	calification FLOAT DEFAULT 0 NOT NULL
 )

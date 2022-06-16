@@ -64,6 +64,78 @@ BEGIN
 	RETURN(@isEmail)
 END
 GO
+CREATE PROCEDURE isDepartmentExist @vidD INT NOT NULL
+AS
+BEGIN
+	IF((SELECT count(idDepartment) FROM Department WHERE @vidD = idDepartment)>=1)
+		RETURN(1)
+	ELSE
+		RETURN(0)
+END
+GO
+CREATE PROCEDURE isJobExist @vIdJob INT
+AS
+BEGIN
+	IF(@vIdJob IS NOT NULL )
+		BEGIN 
+		IF((SELECT COUNT(idJob) FROM Job WHERE @vIdJob = idJob)>=1)
+			BEGIN
+				RETURN(1)
+			END
+		ELSE
+			RETURN(0)
+		END
+	ELSE
+		RETURN(-1)
+END
+GO
+CREATE PROCEDURE isEmployeeUserExist @vidEmployeeUser INT 
+AS
+BEGIN
+	IF(@vidEmployeeUser IS NOT NULL)
+		BEGIN
+			IF((SELECT COUNT(idEmployeeUser) FROM EmployeeUser WHERE idEmployeeUser = @vidEmployeeUser) >= 1)
+				RETURN(1)
+			ELSE
+				RETURN(0)
+		END
+	ELSE
+		RETURN(-1)
+END
+GO
+CREATE PROCEDURE isCashClubExist @vidCashClub INT
+AS 
+BEGIN
+	IF (@vidCashClub IS NOT NULL )
+		BEGIN 
+		IF((SELECT COUNT(idCashClub) FROM CashClub WHERE @vidCashClub = idCashClub) >= 1)
+			BEGIN
+				RETURN(1)
+			END
+		ELSE
+			RETURN(0)
+		END
+	ELSE
+		RETURN(-1)
+END
+GO
+CREATE PROCEDURE isEmployeeExist @vidEmployee INT
+AS 
+BEGIN
+	IF(@vidEmployee IS NOT NULL)
+		IF((SELECT COUNT(idEmployee) FROM Employee WHERE idEmployee =@vidEmployee) >= 1)
+			RETURN(1)
+		ELSE
+			RETURN(0)
+	RETURN(0)
+END
+GO
+
+
+
+
+
+
 /*-----------------------------------------------------------------------------------------*
 |									CRUD InfoEmployee								   |							
 ------------------------------------------------------------------------------------------*/
@@ -204,9 +276,10 @@ BEGIN
 		END
 	RETURN (@result)
 END
-/*
-					 CRUD Department
-*/
+/*============================================================================
+					 CRUD Départment
+*============================================================================*/
+
 GO
 --Only for admins
 CREATE PROCEDURE CDepartment @idUser INT, @departmentname VARCHAR(30)
@@ -220,3 +293,297 @@ BEGIN
 	ELSE
 		PRINT N'Department cannot be null'
 END
+GO 
+CREATE PROCEDURE UDepartment @idUser INT, @department VARCHAR(30)
+AS
+BEGIN
+	IF (@department IS NOT NULL)
+		BEGIN
+			UPDATE Department SET departmentName = @department 
+		END
+	ELSE
+		PRINT N'Department cannot be null'
+END
+/*============================================================================
+					 CRUD JOB
+*============================================================================*/
+go
+--we need to convert this to ONLY FOR ADMIN USERS
+CREATE PROCEDURE CJob @pjobName VARCHAR(20) NOT NULL, @pidDepartment INT NOT NULL
+AS
+DECLARE @respidDepartmetExist BIT
+BEGIN 
+	EXEC @respidDepartmetExist = isDepartmentExist @vidD = @pidDepartment
+	IF(@respidDepartmetExist = 0)
+		BEGIN
+			INSERT INTO Job (jobName, idDepartment) VALUES(@pjobName, @pidDepartment)
+			PRINT N'Sucessfully insert into job'
+		END
+	ELSE
+		PRINT N'Id deparmet already exist'
+END
+GO
+CREATE PROCEDURE UJob @pidJob INT NOT NULL, @pJobName INT, @pidDeparment INT
+AS 
+DECLARE @respjobExist BIT
+DECLARE @respidDepartmetExist BIT 
+BEGIN
+	BEGIN TRANSACTION
+	EXEC @respjobExist = isJobExist @vIdJob = @pidJob 
+	IF(@pidDeparment IS NOT NULL)
+		BEGIN
+			EXEC @respidDepartmetExist = isDepartmentExist @vidD = @pidDeparment
+		END
+	ELSE
+		BEGIN
+			SET @respidDepartmetExist = 1
+		END
+	IF(@respidDepartmetExist = 1)
+		BEGIN
+		IF(@respjobExist = 0)
+			BEGIN
+				UPDATE Job SET jobName = ISNULL( @pJobName, jobName ), idDepartment = ISNULL(@pidDeparment, idDepartment) WHERE
+				@pidJob = idJob
+			END
+		ELSE
+			BEGIN
+				PRINT N'Job is not in the database'
+			END
+		END
+	ELSE
+		BEGIN
+			PRINT N'Department do not exist' 
+		END
+	COMMIT TRANSACTION
+END
+GO
+/*============================================================================
+					 CRUD Employee user
+*============================================================================*/
+--create
+CREATE PROCEDURE CEmployeeUser @pidEmployee INT NOT NULL, @ppassword VARBINARY(8000) NOT NULL
+AS
+DECLARE @respUserExist BIT
+BEGIN
+	EXEC @respUserExist = isEmployeeUserExist @vidEmployeeUser = @pidEmployee 
+	IF (@respUserExist =0)
+		BEGIN
+			INSERT INTO EmployeeUser (idEmployeeUser, pasword) VALUES (@pidEmployee,ENCRYPTBYPASSPHRASE('password',@ppassword))
+		END
+	ELSE
+		PRINT N'This user already exist' 
+END
+GO
+--update pasword
+CREATE PROCEDURE UEmployeeUserPassword @pidEmployee INT NOT NULL, @ppassword VARBINARY(8000) NOT NULL
+AS
+DECLARE @respUserExist BIT
+BEGIN
+	EXEC @respUserExist = isEmployeeUserExist @vidEmployeeUser = @pidEmployee 
+	IF (@respUserExist =1)
+		BEGIN
+			UPDATE EmployeeUser SET pasword = ENCRYPTBYPASSPHRASE('password',@ppassword) WHERE @pidEmployee = idEmployeeUser
+		END
+	ELSE
+		PRINT N'This user do not exist' 
+END
+GO
+--update reinstate user
+CREATE PROCEDURE reinstateEmployeeUser @pidEmployee INT NOT NULL 
+AS
+DECLARE @respUserExist BIT
+BEGIN
+	EXEC @respUserExist = isEmployeeUserExist @vidEmployeeUser = @pidEmployee 
+	IF (@respUserExist =1)
+		BEGIN
+			UPDATE EmployeeUser SET isActive = 1 WHERE @pidEmployee = idEmployeeUser
+		END
+	ELSE
+		PRINT N'This user do not exist' 
+END
+go
+--read
+CREATE PROCEDURE REmployeeUser  @pidEmployee INT, @pisActive BIT
+AS
+BEGIN
+	SELECT idEmployeeUser, isActive FROM EmployeeUser WHERE  idEmployeeUser = ISNULL(@pidEmployee, idEmployeeUser) 
+						AND isActive = ISNULL(@pisActive, isActive) 
+END
+GO
+--delete
+CREATE PROCEDURE DEmployeeUser @pidEmployee INT NOT NULL
+AS
+DECLARE @respUserExist BIT
+BEGIN
+	EXEC @respUserExist = isEmployeeUserExist @vidEmployeeUser = @pidEmployee 
+	IF (@respUserExist =1)
+		BEGIN
+			UPDATE EmployeeUser SET isActive = 0 WHERE  @pidEmployee = idEmployeeUser
+		END
+	ELSE
+		PRINT N'This user do not exist' 
+END
+GO
+/*============================================================================
+					 CRUD CASH CLUB
+*============================================================================*/
+CREATE PROCEDURE CcashClub @pcashType VARCHAR(20) NOT NULL, @pidClub INT NOT NULL
+AS
+BEGIN
+	INSERT INTO CashClub (cashType, idClub) VALUES (@pcashType, @pidClub)
+END
+GO
+CREATE PROCEDURE RCashClub @pidCashClub INT, @pcashType VARCHAR(20), @pidClub INT
+AS 
+BEGIN 
+	SELECT idCashClub, cashType, idClub FROM CashClub WHERE idCashClub = ISNULL(@pidCashClub, idCashClub) AND
+		cashType= ISNULL(@pcashType, cashType) AND idClub = ISNULL(@pidClub, idClub)
+
+END
+go
+--read cash club
+CREATE PROCEDURE UcashClub @pidCashClub INT NOT NULL, @pcashType VARCHAR(20), @pidClub INT
+AS
+DECLARE @respCashClubExist BIT
+BEGIN
+	EXEC @respCashClubExist = isCashClubExist @vidCashClub = @pidCashClub
+	IF(@respCashClubExist = 1)
+	BEGIN
+		UPDATE CashClub SET cashType = ISNULL(@pcashType, cashType), idClub = ISNULL(@pidClub, idClub)
+		WHERE idCashClub = @pidCashClub
+	END
+	ELSE
+		BEGIN
+		PRINT N'Cash club do not exist to update' 
+		END
+END
+GO
+/*============================================================================
+					 CRUD Employee
+*============================================================================*/
+-- create employee
+CREATE PROCEDURE CEmployee @pidInfoEmployee INT NOT NULL,
+							@psalary money  NOT NULL, 
+							@pidJob INT NOT NULL, 	
+							@pidEmployeeUser INT NOT NULL, 
+							@pidCashClub INT NOT NULL 
+AS
+DECLARE @respidInfoEmployee BIT
+DECLARE @respidJob BIT
+DECLARE @residCashClub BIT
+DECLARE @respidEmployeeUser BIT
+DECLARE @result VARCHAR(100)
+BEGIN
+	EXEC @respidInfoEmployee = isidEmployeeExist @vinfoEmployee = @pidInfoEmployee
+	EXEC @respidJob = isJobExist @vIdJob = @pidJob 
+	EXEC @residCashClub  = isCashClubExist @vidCashClub = @pidCashClub
+	EXEC @respidEmployeeUser = isEmployeeUserExist @vidEmployeeUser = @pidEmployeeUser 
+	BEGIN TRANSACTION
+	IF(@respidInfoEmployee = 1)
+		BEGIN
+		IF(@respidEmployeeUser = 1)
+			BEGIN
+				IF(@residCashClub = 1)
+					BEGIN
+					IF(@respidJob = 1)
+						BEGIN
+							INSERT INTO Employee (idInfoEmployee, salary, idJob,idEmployeerUser, idCashClub) 
+							VALUES (@pidInfoEmployee, @psalary, @pidJob, @pidEmployeeUser,  @pidCashClub)
+							SET @result = 'insert sucessfully'
+						END
+					ELSE
+						SET @result = 'Invalid ID JOB'
+					END
+			ELSE
+				SET @result = 'Invalid id cash club'
+			END
+		ELSE
+			SET @result = 'Invalid EmployeeUser'
+		END
+	ELSE
+		SET @result = 'Invalid idInfoPeople'
+		
+	PRINT @result
+	RETURN (@result)
+	COMMIT TRANSACTION
+END
+go
+-- --					UPDATES 
+-- set Employee Job 
+CREATE PROCEDURE setEmployeeJob @pidEmployee INT, @pidJob INT
+AS
+DECLARE @resEmployee BIT
+DECLARE @respidJob BIT
+BEGIN
+--we need to valitate this for admins only
+	EXEC @resEmployee = isEmployeeExist @vidEmployee = @pidEmployee
+	EXEC @respidJob = isJobExist @vIdJob = @pidJob 
+	IF(@resEmployee =1)
+		BEGIN
+		IF(@respidJob = 1)
+			BEGIN
+				UPDATE Employee SET idJob = ISNULL(@pidJob, idJob) WHERE @pidEmployee = idEmployee
+			END 
+		ELSE
+			PRINT N'Id job do no exist'
+		END
+	ELSE
+		PRINT N'Employee do not exist'
+END
+go
+--update reinstate Employee
+CREATE PROCEDURE reinstateEmployee @pidEmployee INT
+AS
+DECLARE @resEmployee BIT
+BEGIN
+	EXEC @resEmployee = isEmployeeExist @vidEmployee = @pidEmployee
+	IF(@resEmployee =1)
+		BEGIN
+		UPDATE Employee SET isActive = 1 WHERE @pidEmployee = idEmployee		
+		END
+	ELSE
+		PRINT N'Employee do not exist'
+END
+GO
+CREATE PROCEDURE UCalification  @pidEmployee INT, @pcalification FLOAT
+AS
+DECLARE @resEmployee BIT
+BEGIN
+	EXEC @resEmployee = isEmployeeExist @vidEmployee = @pidEmployee
+	IF(@resEmployee =1)
+		BEGIN
+		UPDATE Employee SET calification = @pcalification WHERE @pidEmployee = idEmployee		
+		END
+	ELSE
+		PRINT N'Employee do not exist'
+END
+go
+--update salary
+CREATE PROCEDURE USalary  @pidEmployee INT, @psalary money
+AS
+DECLARE @resEmployee BIT
+BEGIN
+	EXEC @resEmployee = isEmployeeExist @vidEmployee = @pidEmployee
+	IF(@resEmployee =1)
+		BEGIN
+		UPDATE Employee SET salary = @psalary WHERE @pidEmployee = idEmployee		
+		END
+	ELSE
+		PRINT N'Employee do not exist'
+END
+go
+--delete Employee
+CREATE PROCEDURE DEmployee @pidEmployee INT
+AS
+DECLARE @resEmployee BIT
+BEGIN
+	EXEC @resEmployee = isEmployeeExist @vidEmployee = @pidEmployee
+	IF(@resEmployee =1)
+		BEGIN
+		UPDATE Employee SET isActive = 0 WHERE @pidEmployee = idEmployee		
+		END
+	ELSE
+		PRINT N'Employee do not exist'
+END
+GO
+--we don't need the update because we have info people and other necesary updates we already have yet

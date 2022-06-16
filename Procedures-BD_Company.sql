@@ -132,9 +132,34 @@ END
 GO
 
 
-
-
-
+	/*
+	Try to convert varchar to varbinary when the password is secure
+	*/
+alter PROCEDURE ispasswordCorrectFormat @vpassword VARCHAR(8000)
+AS
+BEGIN 
+	IF(len(@vpassword)>=8)--more than 8 is secure
+		BEGIN
+		IF(@vpassword NOT LIKE '%[a-z]%' or @vpassword NOT LIKE '%[0-9]%' or @vpassword NOT LIKE '%[A-Z]%'
+		or @vpassword NOT LIKE '%[~!@#$%^&*()_+-={}\[\]:"|\;,./<>?'']%' ESCAPE '\' )
+			BEGIN
+			PRINT N'Wrong format'
+			RETURN(0)
+			END
+		ELSE
+			BEGIN
+			PRINT N'Sucess'
+			RETURN(1)
+			END
+		END	
+	ELSE
+		BEGIN
+			PRINT N'len less than 8'
+			RETURN(0)
+		END
+END
+GO
+EXEC ispasswordCorrectFormat @vpassword = 'aaaraaaaa%2' 
 
 /*-----------------------------------------------------------------------------------------*
 |									CRUD InfoEmployee								   |							
@@ -487,7 +512,7 @@ BEGIN
 					BEGIN
 					IF(@respidJob = 1)
 						BEGIN
-							INSERT INTO Employee (idInfoEmployee, salary, idJob,idEmployeerUser, idCashClub) 
+							INSERT INTO Employee (idInfoEmployee, salary, idJob,idEmployeeUser, idCashClub) 
 							VALUES (@pidInfoEmployee, @psalary, @pidJob, @pidEmployeeUser,  @pidCashClub)
 							SET @result = 'insert sucessfully'
 						END
@@ -586,4 +611,26 @@ BEGIN
 		PRINT N'Employee do not exist'
 END
 GO
---we don't need the update because we have info people and other necesary updates we already have yet
+--READ
+CREATE PROCEDURE REmployee @pidEmployee INT, 
+						   @pidInfoEmployee INT, 
+						   @pdisActive BIT,
+						   @psalary money,
+						   @pidJob INT,
+						   @pidEmployeeUser INT,
+						   @pdidCashClub INT,
+						   @pcalification FLOAT
+AS
+BEGIN
+	SELECT idEmployee, idInfoEmployee, isActive, salary, idJob, idEmployeeUser,idCashClub, calification
+	FROM Employee WHERE idEmployee = ISNULL(@pidEmployee,idEmployee)
+						AND idInfoEmployee = ISNULL(@pidInfoEmployee,idInfoEmployee)
+						AND isActive = ISNULL(@pdisActive,isActive)
+						AND salary = ISNULL(@psalary,salary)
+						AND idJob = ISNULL(@pidJob,idJob)
+						AND idEmployeeUser = ISNULL(@pidEmployeeUser,idEmployee)
+						AND idCashClub = ISNULL(@pdidCashClub,idCashClub)
+						AND calification = ISNULL(@pcalification,calification)
+END
+go
+

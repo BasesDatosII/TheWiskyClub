@@ -327,10 +327,10 @@ DELIMITER ;
 ##################################################################################################
 DELIMITER //
 CREATE PROCEDURE CProduct (IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2), IN pIdProductType INT, IN pImage BLOB,
-					IN pIdSupplier INT, IN pIdPresentation INT, IN pIdCash INT, IN pTier INT, OUT result VARCHAR(16383))
+					IN pIdSupplier INT, IN pIdPresentation INT, IN pIdCash INT, IN pTier INT, IN pProductDescr VARCHAR(200), OUT result VARCHAR(16383))
 BEGIN
 	IF (pProductName IS NOT NULL AND pCost IS NOT NULL AND pIdProductType IS NOT NULL AND pIdSupplier IS NOT NULL
-		 AND pIdPresentation IS NOT NULL AND pIdCash IS NOT NULL AND pTier IS NOT NULL) THEN
+		 AND pIdPresentation IS NOT NULL AND pIdCash IS NOT NULL AND pTier IS NOT NULL AND pProductDescr IS NOT NULL) THEN
 		BEGIN
 			IF (pCost > 0 AND pTier BETWEEN 1 AND 3) THEN
 				BEGIN
@@ -344,9 +344,15 @@ BEGIN
 												BEGIN
 													IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
 														BEGIN
-															INSERT INTO Product (productName, cost, idProductType, image, idSupplier, idPresentation, idCash, isActive, entryDate, tier)
-                                                            VALUES (pProductName, pCost, pIdProductType, pImage, pIdSupplier, pIdPresentation, pIdCash, 1, CURRENT_DATE(), pTier);
-															SET result = "The Presentation has been added";
+															IF (pProductDescr != "") THEN
+																BEGIN
+																	INSERT INTO Product (productName, cost, idProductType, image, idSupplier, idPresentation, idCash, isActive, entryDate, tier, productDescr)
+																	VALUES (pProductName, pCost, pIdProductType, pImage, pIdSupplier, pIdPresentation, pIdCash, 1, CURRENT_DATE(), pTier, pProductDescr);
+																	SET result = "The Presentation has been added";
+																END;
+															ELSE
+																SET result = "The Product Description can't be empty";
+															END IF;
                                                         END;
 													ELSE
 														SET result = "The Cash ID specified doesn´t exists";
@@ -379,21 +385,21 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE RProduct (IN pIdProduct INT, IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2), IN pIdProductType INT,
-							IN pIdSupplier INT, IN pIdPresentation INT, IN pIdCash INT, IN pIsActive BIT, IN pEntryDate DATE,IN pTier INT)
+CREATE PROCEDURE RProduct (IN pIdProduct INT, IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2), IN pIdProductType INT, IN pIdSupplier INT,
+							IN pIdPresentation INT, IN pIdCash INT, IN pIsActive BIT, IN pEntryDate DATE,IN pTier INT, IN pProductDescr VARCHAR(200))
 BEGIN
-	SELECT idProduct AS 'Product ID', productName AS 'Product Name', cost AS 'Product Cost', idProductType AS 'Product Type ID', image AS 'Image',
-		idSupplier AS 'Supplier ID',idPresentation AS 'Presentation ID', idCash AS 'Cash ID', isActive AS 'Active', entryDate AS 'Entry Date', tier AS 'Tier'
+	SELECT idProduct AS 'Product ID', productName AS 'Product Name', cost AS 'Product Cost', idProductType AS 'Product Type ID', image AS 'Image', idSupplier AS 'Supplier ID',
+		idPresentation AS 'Presentation ID', idCash AS 'Cash ID', isActive AS 'Active', entryDate AS 'Entry Date', tier AS 'Tier', productDescr AS 'Product Description'
     FROM Product WHERE idProduct = IFNULL(pIdProduct, idProduct) AND productName = IFNULL(pProductName, productName) AND cost = IFNULL(pCost, cost)
 		AND idProductType = IFNULL(pIdProductType, idProductType) AND idSupplier = IFNULL(pIdSupplier, idSupplier) AND idPresentation = IFNULL(pIdPresentation, idPresentation)
 		AND idCash = IFNULL(pIdCash, idCash) AND isActive = IFNULL(pIsActive, isActive) AND entryDate = IFNULL(pEntryDate, entryDate)
-		AND tier = IFNULL(pTier, tier);
+		AND tier = IFNULL(pTier, tier) AND productDescr = IFNULL(pProductDescr, productDescr);
 END //
 DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE UProduct (IN pIdProduct INT, IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2), IN pIdProductType INT, IN pImage BLOB, IN pIdSupplier INT, 
-							IN pIdPresentation INT, IN pIdCash INT, IN pIsActive BIT, IN pEntryDate DATE,IN pTier INT, OUT result VARCHAR(16383))
+							IN pIdPresentation INT, IN pIdCash INT, IN pIsActive BIT, IN pEntryDate DATE,IN pTier INT, IN pProductDescr VARCHAR(200), OUT result VARCHAR(16383))
 BEGIN
 	SET result = "";
 	IF (pIdProduct IS NOT NULL AND (SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
@@ -507,6 +513,19 @@ BEGIN
 						END;
 					ELSE
 						SET result = CONCAT(result, 'The Tier is not between 1 and 3\n');
+					END IF;
+                END;
+			END IF;
+            #UPDATING PRODUCTDESCR
+            IF (pProductDescr IS NOT NULL) THEN
+				BEGIN
+					IF (pProductDescr != "") THEN
+						BEGIN
+							UPDATE Product SET productDescr = pProductDescr WHERE idProduct = pIdProduct;
+							SET result = CONCAT(result, 'The Product Description has been modified\n');
+						END;
+					ELSE
+						SET result = CONCAT(result, 'The Product Description can´t be empty\n');
 					END IF;
                 END;
 			END IF;
@@ -866,13 +885,13 @@ DELIMITER ;
 ##################################################################################################
 
 DELIMITER //
-CREATE PROCEDURE CClientUser (IN pUserPassword VARCHAR(30), OUT result VARCHAR(16383))
+CREATE PROCEDURE CClientUser (IN pUserPassword BLOB, OUT result VARCHAR(16383))
 BEGIN
 	IF (pUserPassword IS NOT NULL) THEN
 	BEGIN
 			##IF () THEN HERE GOES THE VALIDATION OF THE FORMAT
 				BEGIN
-					INSERT INTO ClientUser (userPassword, isActive) VALUES (pUserPassword, 1);
+					INSERT INTO ClientUser (userPassword, isActive) VALUES (AES_ENCRYPT(pUserPassword, 'Bases2'), 1);
                     SET result = "The User has been added";
                 END;
 			#ELSE
@@ -889,7 +908,7 @@ DELIMITER //
 CREATE PROCEDURE RClientUser (IN pIdClientUser INT, IN pUserPassword VARCHAR(30), IN pIsActive BIT)
 BEGIN
 	SELECT idClientUser AS 'Client User ID', userPassword AS 'User Password', isActive AS 'Active'
-    FROM ClientUser WHERE idClientUser = IFNULL(pIdClientUser, idClientUser) AND userPassword = IFNULL(pUserPassword, userPassword)
+    FROM ClientUser WHERE idClientUser = IFNULL(pIdClientUser, idClientUser) AND userPassword = IFNULL(AES_DECRYPT(pUserPassword, 'Bases2'), userPassword)
     AND isActive = IFNULL(pIsActive, isActive);
 END //
 DELIMITER ;
@@ -903,8 +922,8 @@ BEGIN
 			IF (pUserPassword IS NOT NULL) THEN
 				##IF () THEN HERE GOES THE VALIDATION OF THE FORMAT
 					BEGIN
-						UPDATE ClientUser SET userPassword = pUserPassword WHERE idClientUser = pIdClientUser;
-						SET result = CONCAT('The User has been added\n');
+						UPDATE ClientUser SET userPassword = AES_ENCRYPT(pUserPassword, 'Bases2') WHERE idClientUser = pIdClientUser;
+						SET result = CONCAT('The Client User Password has been modified\n');
 					END;
 				#ELSE
 					#SET result = CONCAT('The User Password format is incorrect\n');
@@ -2425,10 +2444,10 @@ SELECT * FROM Cash;
 #PRODUCT
 #################################################
 CALL CProduct("Whiskey", 2.62, 1, NULL,
-					1, 1, 1, 1, @result);
+					1, 1, 1, 1, "Is Insane", @result);
 SELECT @result;
-CALL RProduct(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-CALL UProduct(1,"Vodka",NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL, @result);
+CALL RProduct(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, NULL);
+CALL UProduct(1,"Vodka",NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL, NULL, @result);
 SELECT @result;
 CALL DProduct(1,@result);
 SELECT @result;

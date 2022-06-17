@@ -79,7 +79,8 @@ CREATE TABLE Product
     REFERENCES Cash(idCash),
     isActive BIT NOT NULL, #1 = ACTIVE, 0 = NON ACTIVE
     entryDate DATE NOT NULL,
-	tier INT NOT NULL DEFAULT 1
+	tier INT NOT NULL DEFAULT 1,
+    productDescr VARCHAR(200)
 );
 
 CREATE TABLE PopularProducts
@@ -129,7 +130,7 @@ CREATE TABLE Card
 CREATE TABLE ClientUser
 (
 	idClientUser INT AUTO_INCREMENT, PRIMARY KEY (idClientUser),
-    userPassword VARCHAR(30) NOT NULL,
+    userPassword BLOB NOT NULL,
     isActive BIT NOT NULL #1 = ACTIVE, 0 = NON ACTIVE
 );
 

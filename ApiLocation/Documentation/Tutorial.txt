@@ -6,9 +6,9 @@ Install api package to this map
 	https://www.npmjs.com/package/@react-google-maps/api
 ------->>>
 		with NPM	
-			-npm i -S @react-google-maps/api
+			npm i -S @react-google-maps/api
 		with Yarn
-			-yarn add @react-google-maps/api
+			yarn add @react-google-maps/api
 	
 
 Install usePlacesAutocomplete package to get people location google places 
@@ -49,6 +49,5 @@ SVGrepo to que images:
 
 
 OUR KEY: 
-AIzaSyBnx_fuHjBGXSitB9XmSq5OcIShkBvjI7M
-
+AIzaSyC1ZKXrbb__T-dBzt85y1dORbCkhNJ7Y0Q
 

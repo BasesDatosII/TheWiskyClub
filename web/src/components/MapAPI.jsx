@@ -71,7 +71,10 @@ const [markers, setMarkers] = React.useState([]);
 
     if (loadError) return "Error loading maps";
     if (!isLoaded) return "Loading map"
+
+
     return (<div>
+        <h1>The whiskey club</h1> 
         <GoogleMap
         mapContainerStyle={mapContainerStyle} 
         zoom={8}

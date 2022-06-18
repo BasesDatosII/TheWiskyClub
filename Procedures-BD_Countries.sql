@@ -644,20 +644,26 @@ BEGIN
 				BEGIN
 					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 						BEGIN
-							IF (pDeliveryCostProp > 0) THEN
+							IF ((SELECT typeLocation FROM Location WHERE idLocation = pIdLocation) = 1) THEN
 								BEGIN
-									IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
+									IF (pDeliveryCostProp > 0) THEN
 										BEGIN
-											INSERT INTO Club (clubName, idLocation, deliveryCostProp, idCash, isActive)
-                                            VALUES (pClubName, pIdLocation, pDeliveryCostProp, pIdCash, 1);
-											SET result = "The Club has been added";
+											IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
+												BEGIN
+													INSERT INTO Club (clubName, idLocation, deliveryCostProp, idCash, isActive)
+													VALUES (pClubName, pIdLocation, pDeliveryCostProp, pIdCash, 1);
+													SET result = "The Club has been added";
+												END;
+											ELSE
+												SET result = "The Cash ID specified doesn´t exists";
+											END IF;
 										END;
 									ELSE
-										SET result = "The Cash ID specified doesn´t exists";
+										SET result = "The Delivery Cost Proportion needs to be greater than 0";
 									END IF;
 								END;
 							ELSE
-								SET result = "The Delivery Cost Proportion needs to be greater than 0";
+								SET result = "The Location ID specified is of type ClientLocation";
 							END IF;
 						END;
 					ELSE
@@ -707,8 +713,14 @@ BEGIN
 				BEGIN
 					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 						BEGIN
-							UPDATE Club SET idLocation = pIdLocation WHERE idClub = pIdClub;
-							SET result = CONCAT(result, 'The Location ID has been modified\n');
+							IF ((SELECT typeLocation FROM Location WHERE idLocation = pIdLocation) = 1) THEN
+								BEGIN
+									UPDATE Club SET idLocation = pIdLocation WHERE idClub = pIdClub;
+									SET result = CONCAT(result, 'The Location ID has been modified\n');
+								END;
+							ELSE
+								SET result = "The Location ID specified is of type ClientLocation";
+							END IF;
 						END;
 					ELSE
 						SET result = CONCAT(result, 'The Location ID specified doesn´t exists\n');
@@ -843,13 +855,17 @@ BEGIN
 				BEGIN
 					IF (pStock > 0) THEN
 						BEGIN
-							UPDATE Inventory SET stock = pStock WHERE idInventory = pIdInventory;
+							SET @cantAct = (SELECT stock FROM Inventory WHERE idInventory = pIdInventory);
+							UPDATE Inventory SET stock = (@cantAct + pStock) WHERE idInventory = pIdInventory;
 							SET result = CONCAT(result, 'The Stock has been modified\n');
 						END;
 					ELSE
-						SET result = CONCAT('The Stock needs to be greater than 0\n');
+						BEGIN
+							UPDATE Inventory SET stock = pStock WHERE idInventory = pIdInventory;
+							SET result = CONCAT(result, 'The Stock has been reseted to 0\n');
+                        END;
 					END IF;
-                END;
+				END;
 			END IF;
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
@@ -1382,10 +1398,16 @@ BEGIN
 				BEGIN
 					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 						BEGIN
-							INSERT INTO ClientLocation (idClientPeople, idLocation) VALUES
-                            ((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser
-								WHERE CP.idClientUser = pIdClientUser), pIdLocation);
-							SET result = "The Client Location has been added";
+							IF ((SELECT typeLocation FROM Location WHERE idLocation = pIdLocation) = 0) THEN
+								BEGIN
+									INSERT INTO ClientLocation (idClientPeople, idLocation) VALUES
+									((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser
+										WHERE CP.idClientUser = pIdClientUser), pIdLocation);
+									SET result = "The Client Location has been added";
+								END;
+							ELSE
+								SET result = "The Location ID specified is of type Club";
+							END IF;
 						END;
 					ELSE
 						SET result = "The Location ID specified doesn´t exists";
@@ -1433,8 +1455,14 @@ BEGIN
 				BEGIN
 					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 						BEGIN
-							UPDATE ClientLocation SET idLocation = pIdLocation WHERE idClientLocation = pIdClientLocation;
-							SET result = CONCAT(result, 'The Client Location ID has been modified\n');
+							IF ((SELECT typeLocation FROM Location WHERE idLocation = pIdLocation) = 0) THEN
+								BEGIN
+									UPDATE ClientLocation SET idLocation = pIdLocation WHERE idClientLocation = pIdClientLocation;
+									SET result = CONCAT(result, 'The Client Location ID has been modified\n');
+								END;
+							ELSE
+								SET result = "The Location ID specified is of type Club";
+							END IF;
 						END;
 					ELSE
 						SET result = CONCAT('The Location ID specified doesn´t exists\n');
@@ -2286,24 +2314,46 @@ DELIMITER ;
 ##################################################################################################
 #PROCEDURES
 ##################################################################################################
+#CALCULATE DELIVERY COST
+DELIMITER //
+CREATE PROCEDURE CalculateDeliveryC(IN pIdClientUser INT, IN pIdClientLocation INT, IN pIdClub INT, OUT deliveryCost DECIMAL(15,2))
+BEGIN
+	SET deliveryCost = (SELECT (deliveryCostProp * (SELECT ST_DISTANCE(
+    #GEOGRAPHY FOR CLUB LOCATION
+    (SELECT location FROM Location L INNER JOIN Club C ON L.idLocation = C.idLocation WHERE idClub = pIdClub)
+    #GEOGRAPHY FOR CLIENT LOCATION
+    ,(SELECT location FROM Location L INNER JOIN ClientLocation CL ON L.idLocation = CL.idLocation
+		INNER JOIN ClientPeople CP ON CL.idClientPeople = CP.idClientPeople
+        INNER JOIN ClientUser CU ON CP.idClientUser = CU.idClientUser
+		WHERE CU.idClientUser = pIdClientUser AND CL.idClientLocation = pIdClientLocation)))) FROM Club WHERE idClub = pIdClub);
+END //
+DELIMITER ;
 
 #OPEN ORDER
 DELIMITER //
-CREATE PROCEDURE OpenOrder(IN pIdClientUser INT, IN pIdClub INT, IN pIdEmployer INT, IN pIdMailer INT, OUT result VARCHAR(16383))
+CREATE PROCEDURE OpenOrder(IN pIdClientUser INT, IN pIdClientLocation INT, IN pIdClub INT, IN pIdEmployer INT, IN pIdMailer INT, OUT result VARCHAR(16383))
 BEGIN
-	IF (pIdClientUser IS NOT NULL AND pIdClub IS NOT NULL AND pIdEmployer IS NOT NULL AND pIdMailer IS NOT NULL) THEN
+	IF (pIdClientUser IS NOT NULL AND pIdClientLocation IS NOT NULL AND pIdClub IS NOT NULL AND pIdEmployer IS NOT NULL AND pIdMailer IS NOT NULL) THEN
 		BEGIN
 			IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
 				BEGIN
-					IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+					IF ((SELECT COUNT(idClientLocation) FROM ClientLocation CL INNER JOIN ClientPeople CP ON CL.idClientPeople = CP.idClientPeople
+						INNER JOIN ClientUser CU ON CP.idClientUser = CU.idClientUser WHERE CU.idClientUser = pIdClientUser AND idClientLocation = pIdClientLocation) > 0) THEN
 						BEGIN
-							INSERT INTO OrderP (idClientPeople, orderDate, idClub, idEmployer, idMailer) VALUES
-							((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser WHERE CP.idClientUser = pIdClientUser),
-							CURRENT_DATE(), pIdClub, pIdEmployer, pIdMailer);
-							SET result = LAST_INSERT_ID();
+							IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+								BEGIN
+									CALL CalculateDeliveryC (pIdClientUser, pIdClientLocation, pIdClub, @deliveryCost);
+									INSERT INTO OrderP (idClientPeople, orderDate, idClub, idEmployer, idMailer, deliveryCost) VALUES
+									((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser WHERE CP.idClientUser = pIdClientUser),
+									CURRENT_DATE(), pIdClub, pIdEmployer, pIdMailer, @deliveryCost);
+									SET result = LAST_INSERT_ID();
+								END;
+							ELSE
+								SET result = "The Club ID specified doesn´t exists";
+							END IF;
 						END;
 					ELSE
-						SET result = "The Club ID specified doesn´t exists";
+						SET result = "The Client Location ID specified doesn´t exists or is from another Client";
 					END IF;
 				END;
 			ELSE
@@ -2456,7 +2506,9 @@ SELECT * FROM Product;
 
 #LOCATION
 #################################################
-CALL CLocation(ST_GeomFromText('POLYGON((0 5, 2 5, 2 7, 0 7, 0 5))'), 1, @result);
+CALL CLocation(ST_GeomFromText('POINT(0 0)'), 1, @result);
+SELECT @result;
+CALL CLocation(ST_GeomFromText('POINT(10 12)'), 0, @result);
 SELECT @result;
 CALL RLocation(NULL, NULL, NULL);
 CALL ULocation(1, NULL, 0, 1, @result);
@@ -2471,7 +2523,7 @@ SELECT * FROM Location;
 CALL CClub("Guardians Club", 1, 2.5, 1, @result);
 SELECT @result;
 CALL RClub(NULL,NULL,NULL,NULL,NULL, NULL);
-CALL UClub(1, "The Guardians Club", NULL, NULL, NULL, 1, @result);
+CALL UClub(1, "The Guardians Club", 2, NULL, NULL, 1, @result);
 SELECT @result;
 CALL DClub(1,@result);
 SELECT @result;
@@ -2542,9 +2594,7 @@ SELECT * FROM Card;
 
 #CLIENTLOCATION
 #################################################
-CALL CClientLocation(1, 1, @result);
-SELECT @result;
-CALL CClientLocation(1, 1, @result);
+CALL CClientLocation(1, 2, @result);
 SELECT @result;
 CALL RClientLocation(NULL, NULL, NULL);
 CALL UClientLocation(1, NULL, 2, @result);
@@ -2648,7 +2698,7 @@ SELECT * FROM PopularProducts;
 
 #OPENORDER
 #################################################
-CALL OpenOrder(1, 1, 1, 2, @result);
+CALL OpenOrder(1, 1, 1, 1, 2, @result);
 SELECT @result;
 SELECT * FROM OrderP;
 #################################################
@@ -2667,7 +2717,10 @@ SELECT * FROM OrderLine;
 CALL ReadLine(1);
 #################################################
 
-
+#CALCULATEDELIVERYC
+#################################################
+CALL CalculateDeliveryC(1, 1, 1);
+#################################################
 
 
 

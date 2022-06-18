@@ -8,6 +8,8 @@
 DELIMITER //
 CREATE PROCEDURE CProductType (IN pTypeName varchar(20), OUT result VARCHAR(16383))
 BEGIN
+	#CREATING A PRODUCT TYPE
+	#CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pTypeName IS NOT NULL AND pTypeName != "") THEN
 		BEGIN
 			IF ((SELECT COUNT(idProductType) FROM ProductType WHERE typeName = pTypeName) = 0) THEN
@@ -28,6 +30,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RProductType (IN pIdProductType INT, IN pTypeName varchar(16383), IN pIsActive BIT) 
 BEGIN
+	#READING PRODUCT TYPE DATABASE INFORMATION
 	SELECT idProductType AS 'Product Type ID', typeName AS 'Product Type Name', isActive AS 'Active'
     FROM ProductType WHERE idProductType = IFNULL(pIdProductType, idProductType) AND typeName = IFNULL(pTypeName, typeName)
     AND isActive = IFNULL(pIsActive, isActive);
@@ -37,9 +40,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UProductType (IN pIdProductType INT, IN pTypeName varchar(20), IN pIsActive BIT, OUT result VARCHAR(16383))
 BEGIN
+	#UPDATING PRODUCT TYPE DATABASE INFORMATION
 	SET result = "";
+	#CHECKS IF PRODUCTTYPID EXISTS
 	IF (pIdProductType IS NOT NULL AND (SELECT COUNT(idProductType) FROM ProductType WHERE idProductType = pIdProductType) > 0) THEN
 		BEGIN
+			#UPDATING TYPENAME
 			IF (pTypeName IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idProductType) FROM ProductType WHERE typeName = pTypeName) = 0 AND pTypeName != "") THEN
@@ -52,6 +58,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING ACTIVE
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
 					UPDATE ProductType SET isActive = pIsActive WHERE idProductType = pIdProductType;
@@ -69,6 +76,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DProductType (IN pIdProductType INT, OUT result VARCHAR(16383))
 BEGIN
+	#DEACTIVATING PRODUCTTYPE
 	IF ((SELECT COUNT(idProductType) FROM ProductType WHERE idProductType = pIdProductType) > 0) THEN
 		BEGIN
 			UPDATE ProductType SET isActive = 0 WHERE idProductType = pIdProductType;
@@ -87,6 +95,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CSupplier (IN pSupplierName VARCHAR(20), OUT result VARCHAR(16383))
 BEGIN
+	#CREATING A SUPPLIER
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pSupplierName IS NOT NULL AND pSupplierName != "") THEN
 		BEGIN
 			IF ((SELECT COUNT(idSupplier) FROM Supplier WHERE supplierName = pSupplierName) = 0) THEN
@@ -107,6 +117,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RSupplier (IN pIdSupplier INT, IN pSupplierName varchar(20), IN pIsActive BIT)
 BEGIN
+	#READING SUPPLIER DATABASE INFORMATION
 	SELECT idSupplier AS 'Supplier ID', supplierName AS 'Supplier Name', isActive AS 'Active'
     FROM Supplier WHERE idSupplier = IFNULL(pIdSupplier, idSupplier) AND supplierName = IFNULL(pSupplierName, SupplierName)
     AND isActive = IFNULL(pIsActive, isActive);
@@ -116,9 +127,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE USupplier (IN pIdSupplier INT, IN pSupplierName varchar(20), IN pIsActive BIT, OUT result VARCHAR(16383))
 BEGIN
+	#UPDATING SUPPLIER DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF SUPPLIER ID EXISTS
 	IF (pIdSupplier IS NOT NULL AND (SELECT COUNT(idSupplier) FROM Supplier WHERE idSupplier = pIdSupplier) > 0) THEN
 		BEGIN
+			#UPDATING SUPPLIER NAME
 			IF (pSupplierName IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idSupplier) FROM Supplier WHERE supplierName = pSupplierName) = 0 AND pSupplierName != "") THEN
@@ -131,6 +145,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING SUPPLIER ISACTIVE
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
 					UPDATE Supplier SET isActive = pIsActive WHERE idSupplier = pIdSupplier;
@@ -148,6 +163,7 @@ DELIMITER
 DELIMITER //
 CREATE PROCEDURE DSupplier (IN pIdSupplier INT, OUT result VARCHAR(16383))
 BEGIN
+	#DEACTIVATING SUPPLIER
 	IF ((SELECT COUNT(idSupplier) FROM Supplier WHERE idSupplier = pIdSupplier) > 0) THEN
 		BEGIN
 			UPDATE Supplier SET isActive = 0 WHERE idSupplier = pIdSupplier;
@@ -166,6 +182,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CPresentation (IN pAmountBottles INT, IN pSizeBottle INT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING A PRESENTATION
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pAmountBottles IS NOT NULL AND pSizeBottle IS NOT NULL) THEN
 		BEGIN
 			IF (pAmountBottles > 0 AND pSizeBottle > 0) THEN
@@ -192,6 +210,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RPresentation (IN pIdPresentation INT, IN pAmountBottles INT, IN pSizeBottle INT)
 BEGIN
+	#READING PRESENTATION DATABASE INFORMATION
 	SELECT idPresentation AS 'Presentation ID', amountBottles AS 'Amount of Bottles', sizeBottle AS 'Size of the Bottles'
     FROM Presentation WHERE idPresentation = IFNULL(pIdPresentation, idPresentation) AND amountBottles = IFNULL(pAmountBottles, amountBottles)
     AND sizeBottle = IFNULL(pSizeBottle, sizeBottle);
@@ -201,9 +220,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UPresentation (IN pIdPresentation INT, IN pAmountBottles INT, IN pSizeBottle INT, OUT result VARCHAR(16383))
 BEGIN
+	#UPDATING PRESENTATION DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF PRESENTATION ID EXISTS
 	IF (pIdPresentation IS NOT NULL AND (SELECT COUNT(IdPresentation) FROM Presentation WHERE idPresentation = pIdPresentation) > 0) THEN
 		BEGIN
+			#UPDATE AMOUNT OF BOTTLES
 			IF (pAmountBottles IS NOT NULL) THEN
 				BEGIN
 					IF (pAmountBottles > 0) THEN
@@ -216,6 +238,7 @@ BEGIN
 					END IF;
 				END;
 			END IF;
+            #UPDATE SIZE OF BOTTLES
             IF (pSizeBottle IS NOT NULL) THEN
 				BEGIN
 					IF (pSizeBottle > 0) THEN
@@ -239,6 +262,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DPresentation (IN pIdPresentation INT, OUT result VARCHAR(16383))
 BEGIN
+	#DELETING PRESENTATION
 	IF ((SELECT COUNT(idPresentation) FROM Presentation WHERE idPresentation = pIdPresentation) > 0) THEN
 		BEGIN
 			DELETE FROM Presentation WHERE idPresentation = pIdPresentation;
@@ -256,6 +280,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CCash (IN pCashType VARCHAR(20), OUT result VARCHAR(16383))
 BEGIN
+	#CREATING CASH
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pCashType IS NOT NULL AND pCashType != "") THEN
 		BEGIN
 			IF ((SELECT COUNT(idCash) FROM Cash WHERE cashType = pCashType) = 0) THEN
@@ -276,6 +302,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RCash (IN pIdCash INT, IN pCashType VARCHAR(20))
 BEGIN
+	#READING CASH DATABASE INFORMATION
 	SELECT idCash AS 'Cash ID', cashType AS 'Cash Type Name'
     FROM Cash WHERE idCash = IFNULL(pIdCash, idCash) AND cashType = IFNULL(pCashType, cashType);
 END //
@@ -284,7 +311,9 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UCash (IN pIdCash INT, IN pCashType VARCHAR(20), OUT result VARCHAR(16383))
 BEGIN
+	#UPDATING CASH DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF CASH ID EXISTS
 	IF (pIdCash IS NOT NULL AND (SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
 		BEGIN
 			IF (pCashType IS NOT NULL) THEN
@@ -310,6 +339,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DCash (IN pIdCash INT, OUT result VARCHAR(16383))
 BEGIN
+	#DELETING CASH
 	IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
 		BEGIN
 			DELETE FROM Cash WHERE idCash = pIdCash;
@@ -329,6 +359,8 @@ DELIMITER //
 CREATE PROCEDURE CProduct (IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2), IN pIdProductType INT, IN pImage BLOB,
 					IN pIdSupplier INT, IN pIdPresentation INT, IN pIdCash INT, IN pTier INT, IN pProductDescr VARCHAR(200), OUT result VARCHAR(16383))
 BEGIN
+	#CREATING PRODUCT
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pProductName IS NOT NULL AND pCost IS NOT NULL AND pIdProductType IS NOT NULL AND pIdSupplier IS NOT NULL
 		 AND pIdPresentation IS NOT NULL AND pIdCash IS NOT NULL AND pTier IS NOT NULL AND pProductDescr IS NOT NULL) THEN
 		BEGIN
@@ -388,6 +420,7 @@ DELIMITER //
 CREATE PROCEDURE RProduct (IN pIdProduct INT, IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2), IN pIdProductType INT, IN pIdSupplier INT,
 							IN pIdPresentation INT, IN pIdCash INT, IN pIsActive BIT, IN pEntryDate DATE,IN pTier INT, IN pProductDescr VARCHAR(200))
 BEGIN
+	#READING PRODUCT DATABASE INFORMATION
 	SELECT idProduct AS 'Product ID', productName AS 'Product Name', cost AS 'Product Cost', idProductType AS 'Product Type ID', image AS 'Image', idSupplier AS 'Supplier ID',
 		idPresentation AS 'Presentation ID', idCash AS 'Cash ID', isActive AS 'Active', entryDate AS 'Entry Date', tier AS 'Tier', productDescr AS 'Product Description'
     FROM Product WHERE idProduct = IFNULL(pIdProduct, idProduct) AND productName = IFNULL(pProductName, productName) AND cost = IFNULL(pCost, cost)
@@ -401,7 +434,9 @@ DELIMITER //
 CREATE PROCEDURE UProduct (IN pIdProduct INT, IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2), IN pIdProductType INT, IN pImage BLOB, IN pIdSupplier INT, 
 							IN pIdPresentation INT, IN pIdCash INT, IN pIsActive BIT, IN pEntryDate DATE,IN pTier INT, IN pProductDescr VARCHAR(200), OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING PRODUCT DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF PRODUCT ID EXISTS
 	IF (pIdProduct IS NOT NULL AND (SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
 		BEGIN
 			#UPDATING PRODUCT NAME
@@ -516,7 +551,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
-            #UPDATING PRODUCTDESCR
+            #UPDATING PRODUCT DESCRIPTION
             IF (pProductDescr IS NOT NULL) THEN
 				BEGIN
 					IF (pProductDescr != "") THEN
@@ -541,6 +576,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DProduct (IN pIdProduct INT, OUT result VARCHAR(16383))
 BEGIN
+	#DEACTIVATING PRODUCT
 	IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
 		BEGIN
 			UPDATE Product SET isActive = 0 WHERE idProduct = pIdProduct;
@@ -559,6 +595,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CLocation (IN pLocation GEOMETRY, IN pTypeLocation BIT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING LOCATION
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pLocation IS NOT NULL AND pTypeLocation IS NOT NULL) THEN
 	BEGIN
 			IF ((SELECT COUNT(idLocation) FROM Location WHERE location = pLocation) = 0) THEN
@@ -579,6 +617,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RLocation (IN pIdLocation INT, IN pTypeLocation BIT, IN pIsActive BIT)
 BEGIN
+	#READING LOCATION DATABASE INFORMATION
 	SELECT idLocation AS 'Location ID', location AS 'Location', typeLocation AS 'Location Type'
     FROM Location WHERE idLocation = IFNULL(pIdLocation, idLocation) AND typeLocation = IFNULL(pTypeLocation, typeLocation)
     AND isActive = IFNULL(pIsActive, isActive);
@@ -588,21 +627,26 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE ULocation (IN pIdLocation INT, IN pLocation GEOMETRY, IN pTypeLocation BIT, IN pIsActive BIT, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING LOCATION DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF LOCATION ID EXISTS
 	IF (pIdLocation IS NOT NULL AND (SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 		BEGIN
+			#UPDATES LOCATION SPATIAL DATA
 			IF (pLocation IS NOT NULL) THEN
 				BEGIN
 					UPDATE Location SET location = pLocation WHERE idLocation = pIdLocation;
 					SET result = CONCAT(result, 'The Location has been modified\n');
 				END;
 			END IF;
+            #UPDATES LOCATION TYPE
             IF (pTypeLocation IS NOT NULL) THEN
 				BEGIN
 					UPDATE Location SET typeLocation = pTypeLocation WHERE idLocation = pIdLocation;
 					SET result = CONCAT(result, 'The Location Type has been modified\n');
 				END;
 			END IF;
+            #UPDATES ACTIVE
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
 					UPDATE Location SET isActive = pIsActive WHERE idLocation = pIdLocation;
@@ -620,6 +664,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DLocation (IN pIdLocation INT, OUT result VARCHAR(16383))
 BEGIN
+	#DEACTIVATING LOCATION
 	IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 		BEGIN
 			UPDATE Location SET isActive = 0 WHERE idLocation = pIdLocation;
@@ -638,26 +683,34 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CClub (IN pClubName VARCHAR(20), IN pIdLocation INT, IN pDeliveryCostProp FLOAT, IN pIdCash INT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING CLUB
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pClubName IS NOT NULL AND pIdLocation IS NOT NULL AND pDeliveryCostProp IS NOT NULL AND pIdCash IS NOT NULL) THEN
 	BEGIN
 			IF ((SELECT COUNT(idClub) FROM Club WHERE clubName = pClubName) = 0) THEN
 				BEGIN
 					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 						BEGIN
-							IF (pDeliveryCostProp > 0) THEN
+							IF ((SELECT typeLocation FROM Location WHERE idLocation = pIdLocation) = 1) THEN
 								BEGIN
-									IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
+									IF (pDeliveryCostProp > 0) THEN
 										BEGIN
-											INSERT INTO Club (clubName, idLocation, deliveryCostProp, idCash, isActive)
-                                            VALUES (pClubName, pIdLocation, pDeliveryCostProp, pIdCash, 1);
-											SET result = "The Club has been added";
+											IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
+												BEGIN
+													INSERT INTO Club (clubName, idLocation, deliveryCostProp, idCash, isActive)
+													VALUES (pClubName, pIdLocation, pDeliveryCostProp, pIdCash, 1);
+													SET result = "The Club has been added";
+												END;
+											ELSE
+												SET result = "The Cash ID specified doesn´t exists";
+											END IF;
 										END;
 									ELSE
-										SET result = "The Cash ID specified doesn´t exists";
+										SET result = "The Delivery Cost Proportion needs to be greater than 0";
 									END IF;
 								END;
 							ELSE
-								SET result = "The Delivery Cost Proportion needs to be greater than 0";
+								SET result = "The Location ID specified is of type ClientLocation";
 							END IF;
 						END;
 					ELSE
@@ -677,6 +730,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RClub (IN pIdClub INT, IN pClubName VARCHAR(20), IN pIdLocation INT, IN pDeliveryCostProp FLOAT, IN pIdCash INT, IN pIsActive BIT)
 BEGIN
+	#READING CLUB DATABASE INFORMATION
 	SELECT idClub AS 'Club ID', clubName AS 'Club Name', idLocation AS 'Location ID',
 		deliveryCostProp AS 'Delivery Cost Proportion', idCash AS 'Cash ID', isActive AS 'Active'
     FROM Club WHERE idClub = IFNULL(pIdClub, idClub) AND clubName = IFNULL(pClubName, clubName)
@@ -688,9 +742,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UClub (IN pIdClub INT, IN pClubName VARCHAR(20), IN pIdLocation INT, IN pDeliveryCostProp FLOAT, IN pIdCash INT, IN pIsActive BIT, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING CLUB DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF CLUB ID EXISTS
 	IF (pIdClub IS NOT NULL AND (SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
 		BEGIN
+			#UPDATING CLUB NAME
 			IF (pClubName IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idClub) FROM Club WHERE clubName = pClubName) = 0 AND pClubName != "") THEN
@@ -703,18 +760,26 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING CLUB LOCATION ID
             IF (pIdLocation IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 						BEGIN
-							UPDATE Club SET idLocation = pIdLocation WHERE idClub = pIdClub;
-							SET result = CONCAT(result, 'The Location ID has been modified\n');
+							IF ((SELECT typeLocation FROM Location WHERE idLocation = pIdLocation) = 1) THEN
+								BEGIN
+									UPDATE Club SET idLocation = pIdLocation WHERE idClub = pIdClub;
+									SET result = CONCAT(result, 'The Location ID has been modified\n');
+								END;
+							ELSE
+								SET result = "The Location ID specified is of type ClientLocation";
+							END IF;
 						END;
 					ELSE
 						SET result = CONCAT(result, 'The Location ID specified doesn´t exists\n');
 					END IF;
                 END;
 			END IF;
+            #UPDATING DELIVERY COST PROPORTION
             IF (pDeliveryCostProp IS NOT NULL) THEN
 				BEGIN
 					IF (pDeliveryCostProp > 0) THEN
@@ -727,6 +792,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING CASH ID
             IF (pIdCash IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
@@ -739,6 +805,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING ACTIVE
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
 					UPDATE Club SET isActive = pIsActive WHERE idClub = pIdClub;
@@ -756,6 +823,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DClub (IN pIdClub INT, OUT result VARCHAR(16383))
 BEGIN
+	#DEACTIVATING CLUB
 	IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
 		BEGIN
 			UPDATE Club SET isActive = 0 WHERE idClub = pIdClub;
@@ -773,6 +841,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CInventory (IN pIdClub INT, IN pIdProduct INT, IN pStock INT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING INVENTORY
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pIdClub IS NOT NULL AND pIdProduct IS NOT NULL AND pStock IS NOT NULL) THEN
 	BEGIN
 			IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
@@ -805,6 +875,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RInventory (IN pIdInventory INT, IN pIdClub INT, IN pIdProduct INT, IN pStock INT, IN pIsActive BIT)
 BEGIN
+	#READING INVENTORY DATABASE INFORMATION
 	SELECT idInventory AS 'Inventory ID', idClub AS 'Club ID', idProduct AS 'Product ID',
 		stock AS 'Stock', isActive AS 'Active'
     FROM Inventory WHERE idInventory = IFNULL(pIdInventory, idInventory) AND idClub = IFNULL(pIdClub, idClub)
@@ -816,9 +887,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UInventory (IN pIdInventory INT, IN pIdClub INT, IN pIdProduct INT, IN pStock INT, IN pIsActive BIT, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING INVENTORY DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF INVENTORY ID EXISTS
 	IF (pIdInventory IS NOT NULL AND (SELECT COUNT(idInventory) FROM Inventory WHERE idInventory = pIdInventory) > 0) THEN
 		BEGIN
+			#UPDATING CLUB ID
 			IF (pIdClub IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
@@ -829,6 +903,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING PRODUCT ID
             IF (pIdProduct IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
@@ -839,18 +914,26 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING STOCK
             IF (pStock IS NOT NULL) THEN
 				BEGIN
+					#IF STOCK > 0 ADDS MORE STOCK
 					IF (pStock > 0) THEN
 						BEGIN
-							UPDATE Inventory SET stock = pStock WHERE idInventory = pIdInventory;
+							SET @cantAct = (SELECT stock FROM Inventory WHERE idInventory = pIdInventory);
+							UPDATE Inventory SET stock = (@cantAct + pStock) WHERE idInventory = pIdInventory;
 							SET result = CONCAT(result, 'The Stock has been modified\n');
 						END;
+					#IF STOCK = 0 RESETS STOCK
 					ELSE
-						SET result = CONCAT('The Stock needs to be greater than 0\n');
+						BEGIN
+							UPDATE Inventory SET stock = pStock WHERE idInventory = pIdInventory;
+							SET result = CONCAT(result, 'The Stock has been reseted to 0\n');
+                        END;
 					END IF;
-                END;
+				END;
 			END IF;
+            #UPDATING ACTIVE
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
 					UPDATE Inventory SET isActive = pIsActive WHERE idInventory = pIdInventory;
@@ -868,6 +951,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DInventory (IN pIdInventory INT, OUT result VARCHAR(16383))
 BEGIN
+	#DEACTIVATING INVENTORY
 	IF ((SELECT COUNT(idInventory) FROM Inventory WHERE idInventory = pIdInventory) > 0) THEN
 		BEGIN
 			UPDATE Inventory SET isActive = 0 WHERE idInventory = pIdInventory;
@@ -887,10 +971,14 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CClientUser (IN pUserPassword BLOB, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING CLIENT USER
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pUserPassword IS NOT NULL) THEN
 	BEGIN
+		#VALIDATING THE USERS PASSWORD FORMAT
 			##IF () THEN HERE GOES THE VALIDATION OF THE FORMAT
 				BEGIN
+					#ENCRYPTING USERS PASSWORD
 					INSERT INTO ClientUser (userPassword, isActive) VALUES (AES_ENCRYPT(pUserPassword, 'Bases2'), 1);
                     SET result = "The User has been added";
                 END;
@@ -907,7 +995,9 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RClientUser (IN pIdClientUser INT, IN pUserPassword VARCHAR(30), IN pIsActive BIT)
 BEGIN
-	SELECT idClientUser AS 'Client User ID', userPassword AS 'User Password', isActive AS 'Active'
+	#READING CLIENT USER DATABASE INFORMATION
+    #DECRYPTING CLIENT USER PASSWORD
+	SELECT idClientUser AS 'Client User ID', AES_DECRYPT(userPassword) AS 'User Password', isActive AS 'Active'
     FROM ClientUser WHERE idClientUser = IFNULL(pIdClientUser, idClientUser) AND userPassword = IFNULL(AES_DECRYPT(pUserPassword, 'Bases2'), userPassword)
     AND isActive = IFNULL(pIsActive, isActive);
 END //
@@ -916,12 +1006,17 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UClientUser (IN pIdClientUser INT, IN pUserPassword VARCHAR(30), IN pIsActive BIT, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING CLIENT USER DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF CLIENT USER ID EXISTS
 	IF (pIdClientUser IS NOT NULL AND (SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
 		BEGIN
+			#UPDATING USER PASSWORD
 			IF (pUserPassword IS NOT NULL) THEN
+				#VALIDATING USER PASSWORD FORMAT
 				##IF () THEN HERE GOES THE VALIDATION OF THE FORMAT
 					BEGIN
+						#ENCRYPTING USER PASSWORD
 						UPDATE ClientUser SET userPassword = AES_ENCRYPT(pUserPassword, 'Bases2') WHERE idClientUser = pIdClientUser;
 						SET result = CONCAT('The Client User Password has been modified\n');
 					END;
@@ -929,6 +1024,7 @@ BEGIN
 					#SET result = CONCAT('The User Password format is incorrect\n');
 				#END IF;
 			END IF;
+            #UPDATING ACTIVE
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
 					UPDATE ClientUser SET isActive = pIsActive WHERE idClientUser = pIdClientUser;
@@ -946,6 +1042,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DClientUser (IN pIdClientUser INT, OUT result VARCHAR(16383))
 BEGIN
+	#DEACTIVATING CLIENT USER
 	IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
 		BEGIN
 			UPDATE ClientUser SET isActive = 0 WHERE idClientUser = pIdClientUser;
@@ -965,6 +1062,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CInfoPeople (IN pPeopleName VARCHAR(20), IN pSurname VARCHAR(30), IN pEmail VARCHAR(50), IN pPhoneNumber INT, IN pBirthDate DATE, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING INFO PEOPLE
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pPeopleName IS NOT NULL AND pSurname IS NOT NULL AND pEmail IS NOT NULL AND pPhoneNumber IS NOT NULL AND pBirthDate IS NOT NULL) THEN
 	BEGIN
 			IF (pPeopleName != "") THEN
@@ -973,6 +1072,7 @@ BEGIN
 						BEGIN
 							IF (pEmail != "") THEN
 								BEGIN
+									#CHECKS FOR A PHONE NUMBER OF 8 DIGITS
 									IF ((SELECT CHAR_LENGTH (pPhoneNumber)) = 8) THEN
 										BEGIN
 											IF (pBirthDate < CURRENT_DATE()) THEN
@@ -1010,6 +1110,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RInfoPeople (IN pIdInfoPeople INT, IN pPeopleName VARCHAR(20), IN pSurname VARCHAR(30), IN pEmail VARCHAR(50), IN pPhoneNumber INT, IN pBirthDate DATE, IN pIsActive INT)
 BEGIN
+	#READING INFOPEOPLE DATABASE INFORMATION
 	SELECT idInfoPeople AS 'Client´s Information ID', peopleName AS 'Name', surname AS 'Surname',
 		email AS 'Email', phoneNumber AS 'Phone Number', birthDate AS 'Birth Date', isActive AS 'Active'
     FROM InfoPeople WHERE idInfoPeople = IFNULL(pIdInfoPeople, idInfoPeople) AND peopleName = IFNULL(pPeopleName, peopleName)
@@ -1021,9 +1122,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UInfoPeople (IN pIdInfoPeople INT, IN pPeopleName VARCHAR(20), IN pSurname VARCHAR(30), IN pEmail VARCHAR(50), IN pPhoneNumber INT, IN pBirthDate DATE, IN pIsActive BIT, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING INFOPEOPLE DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF INFOPEOPLE ID EXISTS
 	IF (pIdInfoPeople IS NOT NULL AND (SELECT COUNT(idInfoPeople) FROM InfoPeople WHERE idInfoPeople = pIdInfoPeople) > 0) THEN
 		BEGIN
+			#UPDATING PEOPLE NAME
 			IF (pPeopleName IS NOT NULL) THEN
 				BEGIN
 					IF (pPeopleName != "") THEN
@@ -1036,6 +1140,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING PEOPLE SURNAME
             IF (pSurname IS NOT NULL) THEN
 				BEGIN
 					IF (pSurname != "") THEN
@@ -1048,6 +1153,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING EMAIL
             IF (pEmail IS NOT NULL) THEN
 				BEGIN
 					IF (pEmail != "") THEN
@@ -1060,8 +1166,10 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING PHONE NUMBER
             IF (pPhoneNumber IS NOT NULL) THEN
 				BEGIN
+					#FHECKS FOR PHONE NUMBER OF 8 DIGITS
 					IF ((SELECT CHAR_LENGTH (pPhoneNumber)) = 8) THEN
 						BEGIN
 							UPDATE InfoPeople SET phoneNumber = pPhoneNumber WHERE idInfoPeople = pIdInfoPeople;
@@ -1072,6 +1180,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING BIRTH DATE
             IF (pBirthDate IS NOT NULL) THEN
 				BEGIN
 					IF (pBirthDate < CURRENT_DATE()) THEN
@@ -1084,6 +1193,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING ACTIVE
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
 					UPDATE InfoPeople SET isActive = pIsActive WHERE idInfoPeople = pIdInfoPeople;
@@ -1101,6 +1211,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DInfoPeople (IN pIdInfoPeople INT, OUT result VARCHAR(16383))
 BEGIN
+	#DEACTIVATING INFOPEOPLE
 	IF ((SELECT COUNT(idInfoPeople) FROM InfoPeople WHERE idInfoPeople = pIdInfoPeople) > 0) THEN
 		BEGIN
 			UPDATE InfoPeople SET isActive = 0 WHERE idInfoPeople = pIdInfoPeople;
@@ -1120,6 +1231,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CClientPeople (IN pIdClientUser INT, IN pIdInfoPeople INT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING CLIENT PEOPLE
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pIdClientUser IS NOT NULL AND pIdInfoPeople IS NOT NULL) THEN
 	BEGIN
 			IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
@@ -1146,6 +1259,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RClientPeople (IN pIdClientPeople INT, IN pIdClientUser INT, IN pIdInfoPeople INT, IN pSalesCounter INT, IN pIsActive BIT)
 BEGIN
+	#READING CLIENT PEOPLE DATABASE INFORMATION
 	SELECT idClientPeople AS 'Client People ID', idClientUser AS 'Client User ID', idInfoPeople AS 'Info People ID',
 		salesCounter AS 'Sales Counter', isActive AS 'Active'
     FROM ClientPeople WHERE idClientPeople = IFNULL(pIdClientPeople, idClientPeople) AND idClientUser = IFNULL(pIdClientUser, idClientUser)
@@ -1157,9 +1271,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UClientPeople (IN pIdClientPeople INT, IN pIdClientUser INT, IN pIdInfoPeople INT, IN pSalesCounter INT, IN pIsActive BIT, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING CLIENT PEOPLE DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF CLIENT PEOPLE EXISTS
 	IF (pIdClientPeople IS NOT NULL AND (SELECT COUNT(idClientPeople) FROM ClientPeople WHERE idClientPeople = pIdClientPeople) > 0) THEN
 		BEGIN
+			#UPDATING CLIENT USER ID
 			IF (pIdClientUser IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
@@ -1172,6 +1289,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING INFO PEOPLE
             IF (pIdInfoPeople IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idInfoPeople) FROM InfoPeople WHERE idInfoPeople = pIdInfoPeople) > 0) THEN
@@ -1184,6 +1302,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING SALES COUNTER
             IF (pSalesCounter IS NOT NULL) THEN
 				BEGIN
 					IF (pSalesCounter >= 0) THEN
@@ -1196,6 +1315,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING ACTIVE
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
 					UPDATE ClientPeople SET isActive = pIsActive WHERE idClientPeople = pIdClientPeople;
@@ -1213,6 +1333,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DClientPeople (IN pIdClientPeople INT, OUT result VARCHAR(16383))
 BEGIN
+	#DEACTIVATING CLIENT PEOPLE
 	IF ((SELECT COUNT(idClientPeople) FROM ClientPeople WHERE idClientPeople = pIdClientPeople) > 0) THEN
 		BEGIN
 			UPDATE ClientPeople SET isActive = 0 WHERE idClientPeople = pIdClientPeople;
@@ -1232,16 +1353,20 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CCard (IN pIdClientUser INT, IN pCardNumber VARCHAR(30), IN pExpirationDate DATE, IN pCVV INT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING CARD
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pIdClientUser IS NOT NULL AND pCardNumber IS NOT NULL AND pExpirationDate IS NOT NULL AND pCVV IS NOT NULL) THEN
 		BEGIN
 			IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
 				BEGIN
+					#CHECKS CARD NUMBER LENGTH
 					IF (CHAR_LENGTH(pCardNumber) BETWEEN 13 AND 18) THEN
 						BEGIN
 							IF ((SELECT COUNT(cardNumber) FROM Card WHERE cardNumber = pCardNumber) = 0) THEN
 								BEGIN
 									IF (pExpirationDate > CURRENT_DATE()) THEN
 										BEGIN
+											#CHECKS CVV LENGTH
 											IF (CHAR_LENGTH(pCVV) BETWEEN 3 AND 4) THEN
 												BEGIN
 													INSERT INTO Card (idInfoPeople, cardNumber, expirationDate, cvv) VALUES
@@ -1279,6 +1404,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RCard (IN pIdCard INT, IN pIdInfoPeople INT, IN pCardNumber VARCHAR(30), IN pExpirationDate DATE, IN pCVV INT)
 BEGIN
+	#READING CARD DATABASE INFORMATION
 	SELECT idCard AS 'Card ID', idInfoPeople AS 'Info People ID', cardNumber AS 'Card Number',
 		expirationDate AS 'Expiration Date', cvv AS 'CVV'
     FROM Card WHERE idCard = IFNULL(pIdCard, idCard) AND idInfoPeople = IFNULL(pIdInfoPeople, idInfoPeople)
@@ -1289,9 +1415,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UCard (IN pIdCard INT, IN pIdInfoPeople INT, IN pCardNumber INT, IN pExpirationDate DATE, IN pCVV INT, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING CARD DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF CARD ID EXISTS
 	IF (pIdCard IS NOT NULL AND (SELECT COUNT(idCard) FROM Card WHERE idCard = pIdCard) > 0) THEN
 		BEGIN
+			#UPDATING INFO PEOPLE ID
 			IF (pIdInfoPeople IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idInfoPeople) FROM InfoPeople WHERE idInfoPeople = pIdInfoPeople) > 0) THEN
@@ -1304,8 +1433,10 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING CARD NUMBER
             IF (pCardNumber IS NOT NULL) THEN
 				BEGIN
+					#CHECKS CARD LENGTH
 					IF (CHAR_LENGTH(pCardNumber) BETWEEN 13 AND 18) THEN
 						BEGIN
 							IF ((SELECT COUNT(cardNumber) FROM Card WHERE cardNumber = pCardNumber) = 0) THEN
@@ -1322,6 +1453,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING EXPIRATION DATE
             IF (pExpirationDate IS NOT NULL) THEN
 				BEGIN
 					IF (pExpirationDate > CURRENT_DATE()) THEN
@@ -1334,8 +1466,10 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING CVV
 			IF (pCVV IS NOT NULL) THEN
 				BEGIN
+					#CHECKS CVV LENGTH
 					IF (CHAR_LENGTH(pCVV) BETWEEN 3 AND 4) THEN
 						BEGIN
 							UPDATE Card SET cvv = pCVV WHERE idCard = pIdCard;
@@ -1357,6 +1491,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DCard (IN pIdCard INT, OUT result VARCHAR(16383))
 BEGIN
+	#DELETING CARD
 	IF ((SELECT COUNT(idCard) FROM Card WHERE idCard = pIdCard) > 0) THEN
 		BEGIN
 			DELETE FROM Card WHERE idCard = pIdCard;
@@ -1376,16 +1511,24 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CClientLocation (IN pIdClientUser INT, IN pIdLocation INT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING CLIENT LOCATION
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pIdClientUser IS NOT NULL AND pIdLocation IS NOT NULL) THEN
-	BEGIN
+		BEGIN
 			IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
 				BEGIN
 					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 						BEGIN
-							INSERT INTO ClientLocation (idClientPeople, idLocation) VALUES
-                            ((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser
-								WHERE CP.idClientUser = pIdClientUser), pIdLocation);
-							SET result = "The Client Location has been added";
+							IF ((SELECT typeLocation FROM Location WHERE idLocation = pIdLocation) = 0) THEN
+								BEGIN
+									INSERT INTO ClientLocation (idClientPeople, idLocation) VALUES
+									((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser
+										WHERE CP.idClientUser = pIdClientUser), pIdLocation);
+									SET result = "The Client Location has been added";
+								END;
+							ELSE
+								SET result = "The Location ID specified is of type Club";
+							END IF;
 						END;
 					ELSE
 						SET result = "The Location ID specified doesn´t exists";
@@ -1404,6 +1547,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RClientLocation (IN pIdClientLocation INT, IN pIdClientPeople INT, IN pIdLocation INT)
 BEGIN
+	#READING CLIENT LOCATION DATABASE INFORMATION
 	SELECT idClientLocation AS 'Client Location ID', idClientPeople AS 'Client People ID', idLocation AS 'Location ID'
     FROM ClientLocation WHERE idClientLocation = IFNULL(pIdClientLocation, idClientLocation)
     AND idClientPeople = IFNULL(pIdClientPeople, idClientPeople)
@@ -1414,9 +1558,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UClientLocation (IN pIdClientLocation INT, IN pIdClientPeople INT, IN pIdLocation INT, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING CLIENT LOCATION DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF CLIENT LOCATION ID EXISTS
 	IF (pIdClientLocation IS NOT NULL AND (SELECT COUNT(idClientLocation) FROM ClientLocation WHERE idClientLocation = pIdClientLocation) > 0) THEN
 		BEGIN
+			#UPDATING CLIENT PEOPLE ID
 			IF (pIdClientPeople IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idClientPeople) FROM ClientPeople WHERE idClientPeople = pIdClientPeople) > 0) THEN
@@ -1429,12 +1576,20 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING LOCATION ID
             IF (pIdLocation IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 						BEGIN
-							UPDATE ClientLocation SET idLocation = pIdLocation WHERE idClientLocation = pIdClientLocation;
-							SET result = CONCAT(result, 'The Client Location ID has been modified\n');
+							#CHECKS TYPE OF THE LOCATION
+							IF ((SELECT typeLocation FROM Location WHERE idLocation = pIdLocation) = 0) THEN
+								BEGIN
+									UPDATE ClientLocation SET idLocation = pIdLocation WHERE idClientLocation = pIdClientLocation;
+									SET result = CONCAT(result, 'The Client Location ID has been modified\n');
+								END;
+							ELSE
+								SET result = "The Location ID specified is of type Club";
+							END IF;
 						END;
 					ELSE
 						SET result = CONCAT('The Location ID specified doesn´t exists\n');
@@ -1452,6 +1607,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DClientLocation (IN pIdClientLocation INT, OUT result VARCHAR(16383))
 BEGIN
+	#DELETING CLIENT LOCATION
 	IF ((SELECT COUNT(idClientLocation) FROM ClientLocation WHERE idClientLocation = pIdClientLocation) > 0) THEN
 		BEGIN
 			DELETE FROM ClientLocation WHERE idClientLocation = pIdClientLocation;
@@ -1471,6 +1627,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CMembership (IN pNameMembership VARCHAR(30), IN pCost DECIMAL(15,2), IN pProductDiscount FLOAT, IN pDeliveryDiscount FLOAT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING MEMBERSHIP
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pNameMembership IS NOT NULL AND pCost IS NOT NULL AND pProductDiscount IS NOT NULL AND pDeliveryDiscount IS NOT NULL) THEN
 	BEGIN
 			IF ((SELECT COUNT(idMembership) FROM Membership WHERE nameMembership = pNameMembership) = 0 AND pNameMembership != "") THEN
@@ -1510,6 +1668,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RMembership (IN pIdMembership INT, IN pNameMembership VARCHAR(30), IN pCost DECIMAL(15,2), IN pProductDiscount FLOAT, IN pDeliveryDiscount FLOAT, IN pIsActive BIT)
 BEGIN
+	#READING MEMBERSHIP DATABASE INFORMATION
 	SELECT idMembership AS 'Membership ID', nameMembership AS 'Membership Name', cost AS 'Cost',
 	productDiscount AS 'Product Discount', deliveryDiscount AS 'Delivery Discount', isActive AS 'Active'
     FROM Membership WHERE idMembership = IFNULL(pIdMembership, idMembership) AND nameMembership = IFNULL(pNameMembership, nameMembership)
@@ -1521,9 +1680,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UMembership (IN pIdMembership INT, IN pNameMembership VARCHAR(30), IN pCost DECIMAL(15,2), IN pProductDiscount FLOAT, IN pDeliveryDiscount FLOAT, IN pIsActive BIT, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING MEMBERSHIP DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF MEMBERSHIP ID EXISTS
 	IF (pIdMembership IS NOT NULL AND (SELECT COUNT(idMembership) FROM Membership WHERE idMembership = pIdMembership) > 0) THEN
 		BEGIN
+			#UPDATING MEMBERSHIP NAME
 			IF (pNameMembership IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idMembership) FROM Membership WHERE nameMembership = pNameMembership) > 0 AND pNameMembership != "") THEN
@@ -1536,6 +1698,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING COST
             IF (pCost IS NOT NULL) THEN
 				BEGIN
 					IF (pCost > 0) THEN
@@ -1548,6 +1711,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING PRODUCT DISCOUNT
             IF (pProductDiscount IS NOT NULL) THEN
 				BEGIN
 					IF (pProductDiscount > 0) THEN
@@ -1560,6 +1724,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #DELIVERY DISCOUNT
             IF (pDeliveryDiscount IS NOT NULL) THEN
 				BEGIN
 					IF (pDeliveryDiscount >= 0) THEN
@@ -1572,6 +1737,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING ACTIVE
 			IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
 					UPDATE Membership SET isActive = pIsActive WHERE idMembership = pIdMembership;
@@ -1589,6 +1755,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DMembership (IN pIdMembership INT, OUT result VARCHAR(16383))
 BEGIN
+	#DEACTIVATING MEMBERSHIP
 	IF ((SELECT COUNT(idMembership) FROM Membership WHERE idMembership = pIdMembership) > 0) THEN
 		BEGIN
 			UPDATE Membership SET isActive = 0 WHERE idMembership = pIdMembership;
@@ -1608,12 +1775,15 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CClientMembership (IN pIdMembership INT, IN pIdClientUser INT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING CLIENT MEMBERSHIP
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pIdMembership IS NOT NULL AND pIdClientUser IS NOT NULL) THEN
 	BEGIN
 			IF ((SELECT COUNT(idMembership) FROM Membership WHERE idMembership = pIdMembership) > 0) THEN
 				BEGIN
 					IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
 						BEGIN
+							#CHECKS IF CLIENT ALREADY HAS A MEMBERSHIP
 							IF ((SELECT COUNT(idClientMembership) FROM ClientMembership WHERE idClientPeople =
                             (SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser
 							WHERE CP.idClientUser = pIdClientUser)) = 0) THEN
@@ -1644,6 +1814,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RClientMembership (IN pIdClientMembership INT, IN pIdMembership INT, IN pIdClientPeople INT)
 BEGIN
+	#READING CLIENT MEMBERSHIP DATABASE INFORMATION
 	SELECT idClientMembership AS 'Client Membership ID', idMembership AS 'Membership ID',
     idClientPeople AS 'Client People ID'
     FROM ClientMembership WHERE idClientMembership = IFNULL(pIdClientMembership, idClientMembership)
@@ -1654,9 +1825,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UClientMembership (IN pIdClientMembership INT, IN pIdMembership INT, IN pIdClientPeople INT, OUT result VARCHAR(16383))
 BEGIN
+	#UPDATING CLIENT MEMBERSHIP
 	SET result = "";
+    #CHECKS IF CLIENT MEMBERSHIP ID EXISTS
 	IF (pIdClientMembership IS NOT NULL AND (SELECT COUNT(idClientMembership) FROM ClientMembership WHERE idClientMembership = pIdClientMembership) > 0) THEN
 		BEGIN
+			#UPDATING MEMBERSHIP ID
 			IF (pIdMembership IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idMembership) FROM Membership WHERE idMembership = pIdMembership) > 0) THEN
@@ -1669,10 +1843,12 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING CLIENT PEOPLE ID
             IF (pIdClientPeople IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idClientPeople) FROM ClientPeople WHERE idClientPeople = pIdClientPeople) > 0) THEN
 						BEGIN
+							#CHECKS IF CLIENT ALREADY HAS A MEMBERSHIP
 							IF ((SELECT COUNT(idClientMembership) FROM ClientMembership WHERE idClientPeople = pIdClientPeople) = 0) THEN
 								BEGIN
 									UPDATE ClientMembership SET idClientPeople = pIdClientPeople WHERE idClientMembership = pIdClientMembership;
@@ -1698,6 +1874,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DClientMembership (IN pIdClientMembership INT, OUT result VARCHAR(16383))
 BEGIN
+	#DELETING CLIENT MEMBERSHIP
 	IF ((SELECT COUNT(idClientMembership) FROM ClientMembership WHERE idClientMembership = pIdClientMembership) > 0) THEN
 		BEGIN
 			DELETE FROM ClientMembership WHERE idClientMembership = pIdClientMembership;
@@ -1717,6 +1894,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CWorkerReview (IN pIdClientUser INT, IN pIdWorker INT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING WORKER REVIEW
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pIdClientUser IS NOT NULL AND pIdWorker IS NOT NULL) THEN
 		BEGIN
 			IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
@@ -1738,6 +1917,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RWorkerReview (IN pIdWorkerReview INT, IN pIdClientUser INT, IN pIdWorker INT, IN pDateWR DATE)
 BEGIN
+	#READING WORKER REVIEW DATABASE INFORMATION
 	SELECT idWorkerReview AS 'Worker Review ID', idClientUser AS 'Client User ID',
     idWorker AS 'Worker ID', dateWR AS 'Worker Review Date'
     FROM WorkerReview WHERE idWorkerReview = IFNULL(pIdWorkerReview, idWorkerReview)
@@ -1749,9 +1929,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UWorkerReview (IN pIdWorkerReview INT, IN pIdClientUser INT, IN pIdWorker INT, IN pDateWR DATE, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING WORKER REVIEW DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF WORKER REVIEW ID EXISTS
 	IF (pIdWorkerReview IS NOT NULL AND (SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
 		BEGIN
+			#UPDATING CLIENT USER ID
 			IF (pIdClientUser IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
@@ -1764,12 +1947,14 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING WORKER ID
             IF (pIdWorker IS NOT NULL) THEN
 				BEGIN
 					UPDATE WorkerReview SET idWorker = pIdWorker WHERE idWorkerReview = pIdWorkerReview;
 					SET result = CONCAT(result, 'The Worker ID has been modified\n');
 				END;
 			END IF;
+            #UPDATING DATE OF REVIEW
             IF (pDateWR IS NOT NULL) THEN
 				BEGIN
 					IF (pDateWR <= CURRENT_DATE()) THEN
@@ -1793,6 +1978,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DWorkerReview (IN pIdWorkerReview INT, OUT result VARCHAR(16383))
 BEGIN
+	#DELETING WORKER REVIEW
 	IF ((SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
 		BEGIN
 			DELETE FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview;
@@ -1812,6 +1998,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CQualification (IN pIdWorkerReview INT, IN pQualDescription VARCHAR(200), OUT result VARCHAR(16383))
 BEGIN
+	#CREATING QUALIFICATION
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pIdWorkerReview IS NOT NULL AND pQualDescription IS NOT NULL) THEN
 		BEGIN
 			IF ((SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
@@ -1839,6 +2027,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RQualification (IN pIdQualification INT, IN pIdWorkerReview INT, IN pQualDescription VARCHAR(200))
 BEGIN
+	#READING QUALIFICATION DATABASE INFORMATION
 	SELECT idQualification AS 'Qualification ID', idWorkerReview AS 'Worker Review ID',
     qualDescription AS 'Qualification Description'
     FROM Qualification WHERE idQualification = IFNULL(pIdQualification, idQualification)
@@ -1850,9 +2039,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UQualification (IN pIdQualification INT, IN pIdWorkerReview INT, IN pQualDescription VARCHAR(200), OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING QUALIFICATION DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF QUALIFICATION ID EXISTS
 	IF (pIdQualification IS NOT NULL AND (SELECT COUNT(idQualification) FROM Qualification WHERE idQualification = pIdQualification) > 0) THEN
 		BEGIN
+			#UPDATING WORKER REVIEW ID
 			IF (pIdWorkerReview IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
@@ -1865,6 +2057,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING QUALIFICATION DESCRIPTION
             IF (pQualDescription IS NOT NULL) THEN
 				BEGIN
 					IF (pQualDescription != "") THEN
@@ -1888,6 +2081,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DQualification (IN pIdQualification INT, OUT result VARCHAR(16383))
 BEGIN
+	#DELETING QUALIFICATION
 	IF ((SELECT COUNT(idQualification) FROM Qualification WHERE idQualification = pIdQualification) > 0) THEN
 		BEGIN
 			DELETE FROM Qualification WHERE idQualification = pIdQualification;
@@ -1907,6 +2101,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CComplaint (IN pIdWorkerReview INT, IN pCompDescription VARCHAR(200), OUT result VARCHAR(16383))
 BEGIN
+	#CREATING COMPLAINT
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pIdWorkerReview IS NOT NULL AND pCompDescription IS NOT NULL) THEN
 		BEGIN
 			IF ((SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
@@ -1934,6 +2130,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RComplaint (IN pIdComplaint INT, IN pIdWorkerReview INT, IN pCompDescription VARCHAR(200), IN pSolved BIT)
 BEGIN
+	#READING COMPLAINT DATABASE INFORMATION
 	SELECT idComplaint AS 'Complaint ID', idWorkerReview AS 'Worker Review ID',
     compDescription AS 'Qualification Description', solved AS 'Solved'
     FROM Complaint WHERE idComplaint = IFNULL(pIdComplaint, idComplaint)
@@ -1946,9 +2143,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UComplaint (IN pIdComplaint INT, IN pIdWorkerReview INT, IN pCompDescription VARCHAR(200), IN pSolved BIT, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING COMPLAINT DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF COMPLAINT ID EXISTS
 	IF (pIdComplaint IS NOT NULL AND (SELECT COUNT(idComplaint) FROM Complaint WHERE idComplaint = pIdComplaint) > 0) THEN
 		BEGIN
+			#UPDATING WORKER REVIEW ID
 			IF (pIdWorkerReview IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
@@ -1961,6 +2161,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATING COMPLAINT DESCRIPTION
             IF (pCompDescription IS NOT NULL) THEN
 				BEGIN
 					IF (pCompDescription != "") THEN
@@ -1973,6 +2174,7 @@ BEGIN
 					END IF;
 				END;
 			END IF;
+            #UPDATING IF IT IS SOLVED
 			IF (pSolved IS NOT NULL) THEN
 				BEGIN
 					UPDATE Complaint SET solved = pSolved WHERE idComplaint = pIdComplaint;
@@ -1990,6 +2192,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DComplaint (IN pIdComplaint INT, OUT result VARCHAR(16383))
 BEGIN
+	#DELETING COMPLAINT
 	IF ((SELECT COUNT(idComplaint) FROM Complaint WHERE idComplaint = pIdComplaint) > 0) THEN
 		BEGIN
 			DELETE FROM Complaint WHERE idComplaint = pIdComplaint;
@@ -2009,10 +2212,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CReview (IN pIdProduct INT, IN pScore INT, IN pRevDescription VARCHAR(200), IN pIdClientUser INT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING REVIEW
 	IF (pIdProduct IS NOT NULL AND pScore IS NOT NULL AND pRevDescription IS NOT NULL AND pIdClientUser IS NOT NULL) THEN
-	BEGIN
+		BEGIN
 			IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
 				BEGIN
+					#CHECKS IF SCORE IS VALID (ONLY CAN BE 1,2,3,4 OR 5)
 					IF (pScore BETWEEN 1 AND 5) THEN
 						BEGIN
 							IF (pRevDescription != "") THEN
@@ -2055,6 +2260,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RReview (IN pIdReview INT, IN pIdProduct INT, IN pScore INT, IN pRevDescription VARCHAR(200), IN pIdClientUser INT, IN pRevDate DATE)
 BEGIN
+	#READING REVIEW DATABASE INFORMATION
 	SELECT idReview AS 'Review ID', idProduct AS 'Product ID', score AS 'Score',
 	revDescription AS 'Review Description',idClientUser AS 'Client User ID', revDate AS 'Review Date'
     FROM Review WHERE idReview = IFNULL(pIdReview, idReview) AND idProduct = IFNULL(pIdProduct, idProduct)
@@ -2066,13 +2272,17 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UReview (IN pIdReview INT, IN pIdProduct INT, IN pScore INT, IN pRevDescription VARCHAR(200), IN pIdClientUser INT, IN pRevDate DATE, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING REVIEW DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF REVIEW ID EXISTS
 	IF (pIdReview IS NOT NULL AND (SELECT COUNT(idReview) FROM Review WHERE idReview = pIdReview) > 0) THEN
 		BEGIN
+			#UPDATING PRODUCT ID
 			IF (pIdProduct IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
 						BEGIN
+							#CHECKS IF CLIENT USER ID DOESN´T ALREADY HAVE A REVIEW FOR THIS PRODUCT
 							IF ((SELECT COUNT(idReview) FROM Review WHERE idProduct = pIdProduct AND idClientUser = 
 								(SELECT idClientUser FROM Review WHERE idReview = pIdReview)) = 0) THEN
 								BEGIN
@@ -2088,6 +2298,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATES SCORE
             IF (pScore IS NOT NULL) THEN
 				BEGIN
 					IF (pScore BETWEEN 1 AND 5) THEN
@@ -2100,6 +2311,7 @@ BEGIN
 					END IF;
 				END;
 			END IF;
+            #UPDATES REVIEW DESCRIPTION
             IF (pRevDescription IS NOT NULL) THEN
 				BEGIN
 					IF (pRevDescription != "") THEN
@@ -2112,6 +2324,7 @@ BEGIN
 					END IF;
 				END;
 			END IF;
+            #UPDATES CLIENT USER ID
             IF (pIdClientUser IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
@@ -2124,6 +2337,7 @@ BEGIN
 					END IF;
                 END;
 			END IF;
+            #UPDATES REVIEW DATE
             IF (pRevDate IS NOT NULL) THEN
 				BEGIN
 					IF (pRevDate <= CURRENT_DATE()) THEN
@@ -2147,6 +2361,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DReview (IN pIdReview INT, OUT result VARCHAR(16383))
 BEGIN
+	#DELETING REVIEW
 	IF ((SELECT COUNT(idReview) FROM Review WHERE idReview = pIdReview) > 0) THEN
 		BEGIN
 			DELETE FROM Review WHERE idReview = pIdReview;
@@ -2166,10 +2381,13 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE CPopularProducts (IN pIdProduct INT, OUT result VARCHAR(16383))
 BEGIN
+	#CREATING POPULAR PRODUCTS
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pIdProduct IS NOT NULL) THEN
 		BEGIN
 			IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
 				BEGIN
+					#CHECKS IF THE PRODUCT ALREADY HAS A POPULAR PRODUCTS ROW
 					IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) = 0) THEN
 						BEGIN
 							INSERT INTO PopularProducts (idProduct) VALUES (pIdProduct);
@@ -2192,6 +2410,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE RPopularProducts (IN pIdPopularProducts INT, IN pIdProduct INT, IN pAmount INT)
 BEGIN
+	#READING POPULAR PRODUCTS DATABASE INFORMATION
 	SELECT idPopularProducts AS 'Popular Products ID', idProduct AS 'Product ID', amount AS 'Amount Sold'
     FROM PopularProducts WHERE idPopularProducts = IFNULL(pIdPopularProducts, idPopularProducts)
     AND idProduct = IFNULL(pIdProduct, idProduct) AND amount = IFNULL(pAmount, amount);
@@ -2201,14 +2420,19 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UPopularProducts (IN pIdPopularProducts INT, IN pIdProduct INT, IN pAmount INT, OUT result VARCHAR(16383))
 BEGIN
+	 #UPDATING POPULAR PRODUCTS DATABASE INFORMATION
 	SET result = "";
+    #CHECKS IF POPULAR PRODUCTS ID EXISTS
 	IF ((pIdPopularProducts IS NOT NULL AND (SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts) > 0) OR
+		#IT CAN ALSO BE UPDATED BY THE PRODUCT ID (ONLY IN THE AMOUNT CASE)
 		(pIdProduct IS NOT NULL AND (SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) > 0)) THEN
 		BEGIN
+			#UPDATING PRODUCT ID
 			IF (pIdProduct IS NOT NULL) THEN
 				BEGIN
 					IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
 						BEGIN
+							#CHECKS IF THE PRODUCT ALREADY HAS A POPULAR PRODUCTS ROW
 							IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) = 0) THEN
 								BEGIN
 									UPDATE PopularProducts SET idProduct = pIdProduct WHERE idPopularProducts = pIdPopularProducts;
@@ -2230,13 +2454,14 @@ BEGIN
                             #DECIDES THE MESSAGE AND OPERATION TO RETURN BASED ON THE PAMOUNT PARAMETER
 							IF (pAmount > 0) THEN
 								BEGIN
-									#CHECKS ACTUAL AMOUNT DEPENDING ON KEY IDPOPULARPRODUCTS OR KEY IDPRODUCT
+									#CHECKS ACTUAL AMOUNT DEPENDING ON KEY IDPOPULARPRODUCTS
                                     IF (pIdPopularProducts IS NOT NULL) THEN
 										BEGIN
 											SET @cantAct = (SELECT amount FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts);
 											UPDATE PopularProducts SET amount = (@cantAct + pAmount)
 											WHERE idPopularProducts = pIdPopularProducts;
 										END;
+									#CHECKS ACTUAL AMOUNT DEPENDING ON KEY IDPRODUCT
 									ELSE IF (pIdProduct IS NOT NULL) THEN
 										BEGIN
 											SET @cantAct = (SELECT amount FROM PopularProducts WHERE idProduct = pIdProduct);
@@ -2270,6 +2495,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE DPopularProducts (IN pIdPopularProducts INT, OUT result VARCHAR(16383))
 BEGIN
+	#DELETING POPULAR PRODUCTS
 	IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts) > 0) THEN
 		BEGIN
 			DELETE FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts;
@@ -2286,24 +2512,50 @@ DELIMITER ;
 ##################################################################################################
 #PROCEDURES
 ##################################################################################################
+#CALCULATE DELIVERY COST
+DELIMITER //
+CREATE PROCEDURE CalculateDeliveryC(IN pIdClientUser INT, IN pIdClientLocation INT, IN pIdClub INT, OUT deliveryCost DECIMAL(15,2))
+BEGIN
+	SET deliveryCost = (SELECT (deliveryCostProp * (SELECT ST_DISTANCE(
+    #GEOGRAPHY FOR CLUB LOCATION
+    (SELECT location FROM Location L INNER JOIN Club C ON L.idLocation = C.idLocation WHERE idClub = pIdClub)
+    #GEOGRAPHY FOR CLIENT LOCATION
+    ,(SELECT location FROM Location L INNER JOIN ClientLocation CL ON L.idLocation = CL.idLocation
+		INNER JOIN ClientPeople CP ON CL.idClientPeople = CP.idClientPeople
+        INNER JOIN ClientUser CU ON CP.idClientUser = CU.idClientUser
+		WHERE CU.idClientUser = pIdClientUser AND CL.idClientLocation = pIdClientLocation)))) FROM Club WHERE idClub = pIdClub);
+END //
+DELIMITER ;
 
 #OPEN ORDER
 DELIMITER //
-CREATE PROCEDURE OpenOrder(IN pIdClientUser INT, IN pIdClub INT, IN pIdEmployer INT, IN pIdMailer INT, OUT result VARCHAR(16383))
+CREATE PROCEDURE OpenOrder(IN pIdClientUser INT, IN pIdClientLocation INT, IN pIdClub INT, IN pIdEmployer INT, IN pIdMailer INT, OUT result VARCHAR(16383))
 BEGIN
-	IF (pIdClientUser IS NOT NULL AND pIdClub IS NOT NULL AND pIdEmployer IS NOT NULL AND pIdMailer IS NOT NULL) THEN
+	#PROCEDURE TO OPEN AN ORDER
+	#CHECKING DATA TYPES AND WHAT THEY CONTAIN
+	IF (pIdClientUser IS NOT NULL AND pIdClientLocation IS NOT NULL AND pIdClub IS NOT NULL AND pIdEmployer IS NOT NULL AND pIdMailer IS NOT NULL) THEN
 		BEGIN
 			IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
 				BEGIN
-					IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+					IF ((SELECT COUNT(idClientLocation) FROM ClientLocation CL INNER JOIN ClientPeople CP ON CL.idClientPeople = CP.idClientPeople
+						INNER JOIN ClientUser CU ON CP.idClientUser = CU.idClientUser WHERE CU.idClientUser = pIdClientUser AND idClientLocation = pIdClientLocation) > 0) THEN
 						BEGIN
-							INSERT INTO OrderP (idClientPeople, orderDate, idClub, idEmployer, idMailer) VALUES
-							((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser WHERE CP.idClientUser = pIdClientUser),
-							CURRENT_DATE(), pIdClub, pIdEmployer, pIdMailer);
-							SET result = LAST_INSERT_ID();
+							IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+								BEGIN
+									#CALCULATES DELIVERY COST AND STORES IT IN SYSTEM VARIABLE @deliveryCost
+									CALL CalculateDeliveryC (pIdClientUser, pIdClientLocation, pIdClub, @deliveryCost);
+									INSERT INTO OrderP (idClientPeople, orderDate, idClub, idEmployer, idMailer, deliveryCost) VALUES
+									((SELECT idClientPeople FROM ClientUser CU INNER JOIN ClientPeople CP ON CU.idClientUser = CP.idClientUser WHERE CP.idClientUser = pIdClientUser),
+									CURRENT_DATE(), pIdClub, pIdEmployer, pIdMailer, @deliveryCost);
+                                    #RETURNS ORDERP ID
+									SET result = LAST_INSERT_ID();
+								END;
+							ELSE
+								SET result = "The Club ID specified doesn´t exists";
+							END IF;
 						END;
 					ELSE
-						SET result = "The Club ID specified doesn´t exists";
+						SET result = "The Client Location ID specified doesn´t exists or is from another Client";
 					END IF;
 				END;
 			ELSE
@@ -2320,6 +2572,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE BuyProduct(IN pIdOrderP INT, IN pIdProduct INT, IN pAmount INT, OUT result VARCHAR(16383))
 BEGIN
+	#PROCEDURE TO BUT A PRODUCT
+	#CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pIdOrderP IS NOT NULL AND pIdProduct IS NOT NULL AND pAmount IS NOT NULL) THEN
 		BEGIN
 			IF ((SELECT COUNT(idOrderP) FROM OrderP WHERE idOrderP = pIdOrderP) > 0) THEN
@@ -2330,9 +2584,12 @@ BEGIN
 								BEGIN
 									START TRANSACTION;
 										SET @idClub = (SELECT idClub FROM OrderP WHERE idOrderP = pIdOrderP);
+                                        #CHECKS IF THE PRODUCT IN THAT CLUB IS AVAILABLE
 										IF ((SELECT isActive FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub) = 1) THEN
 											BEGIN
+												#SETS THE NEW AMOUNT OF THE INVENTORY
 												SET @cantAct = (SELECT stock - pAmount FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub);
+                                                #IF < 0, THE STOCK DOESN'T IS ENOUGH
 												IF (@cantAct >= 0) THEN
 													BEGIN
 														#CHECKS IF THE PRODUCT IS ALREADY IN THE ORDER AND UPDATES THE VALUE IF IT IS
@@ -2347,6 +2604,7 @@ BEGIN
                                                         IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) = 0) THEN
 															CALL CPopularProducts(pIdProduct, @result);
 														END IF;
+                                                        #UPDATES POPULAR PRODUCTS ROW FOR THIS PRODUCT
                                                         CALL UPopularProducts(NULL, pIdProduct, pAmount, @result);
 														SET result = "Product bought succesfully";
 													END;
@@ -2380,6 +2638,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE ReadLine(IN pIdOrderP INT)
 BEGIN
+	#READS THE LINES OF AN SPECIFIC ORDERP ID
 	SELECT idOrderLine AS 'Order Line ID', idProduct AS 'Product ID',
 		cost AS 'Cost', amount AS 'Amount' FROM OrderLine WHERE idOrderP = pIdOrderP;
 END //
@@ -2456,7 +2715,9 @@ SELECT * FROM Product;
 
 #LOCATION
 #################################################
-CALL CLocation(ST_GeomFromText('POLYGON((0 5, 2 5, 2 7, 0 7, 0 5))'), 1, @result);
+CALL CLocation(ST_GeomFromText('POINT(0 0)'), 1, @result);
+SELECT @result;
+CALL CLocation(ST_GeomFromText('POINT(10 12)'), 0, @result);
 SELECT @result;
 CALL RLocation(NULL, NULL, NULL);
 CALL ULocation(1, NULL, 0, 1, @result);
@@ -2471,7 +2732,7 @@ SELECT * FROM Location;
 CALL CClub("Guardians Club", 1, 2.5, 1, @result);
 SELECT @result;
 CALL RClub(NULL,NULL,NULL,NULL,NULL, NULL);
-CALL UClub(1, "The Guardians Club", NULL, NULL, NULL, 1, @result);
+CALL UClub(1, "The Guardians Club", 2, NULL, NULL, 1, @result);
 SELECT @result;
 CALL DClub(1,@result);
 SELECT @result;
@@ -2542,9 +2803,7 @@ SELECT * FROM Card;
 
 #CLIENTLOCATION
 #################################################
-CALL CClientLocation(1, 1, @result);
-SELECT @result;
-CALL CClientLocation(1, 1, @result);
+CALL CClientLocation(1, 2, @result);
 SELECT @result;
 CALL RClientLocation(NULL, NULL, NULL);
 CALL UClientLocation(1, NULL, 2, @result);
@@ -2648,7 +2907,7 @@ SELECT * FROM PopularProducts;
 
 #OPENORDER
 #################################################
-CALL OpenOrder(1, 1, 1, 2, @result);
+CALL OpenOrder(1, 1, 1, 1, 2, @result);
 SELECT @result;
 SELECT * FROM OrderP;
 #################################################
@@ -2667,7 +2926,10 @@ SELECT * FROM OrderLine;
 CALL ReadLine(1);
 #################################################
 
-
+#CALCULATEDELIVERYC
+#################################################
+CALL CalculateDeliveryC(1, 1, 1);
+#################################################
 
 
 

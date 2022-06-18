@@ -180,7 +180,8 @@ CREATE TABLE OrderP
     CONSTRAINT fk_OrderPClub FOREIGN KEY(idClub)
     REFERENCES Club(idClub),
     idEmployer INT NOT NULL,
-    idMailer INT NOT NULL
+    idMailer INT NOT NULL,
+    deliveryCost DECIMAL(15,2) NOT NULL
 );
 
 CREATE TABLE OrderLine

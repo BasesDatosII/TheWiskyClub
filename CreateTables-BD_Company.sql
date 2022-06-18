@@ -65,7 +65,7 @@ CREATE TABLE Employee
 	REFERENCES InfoEmployee(idInfoEmployee),
 	isActive BIT DEFAULT 1 NOT NULL,
 	salary money  NOT NULL,
-	idJob INT NOT NULL,
+	idJob INT,
 	CONSTRAINT fk_EmployeeJob FOREIGN KEY (idJob)
 	REFERENCES Job(idJob),
 	idEmployeeUser INT NOT NULL,

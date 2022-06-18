@@ -31,6 +31,12 @@ Install usePlacesAutocomplete package to get people location google places
 
 		Get api key : https://youtu.be/2_HZObVbe-g
 		
+---->>>
+
+	npm install date-fns --save
+	# or with yarn
+	yarn add date-fns
+
 
 Install combobox to show results
 	https://reach.tech/combobox/
@@ -38,6 +44,11 @@ Install combobox to show results
 	npm install @reach/combobox
 	# or
 	yarn add @reach/combobox
+Install react router
+	npm install react-router-dom
+	or 
+	yarn add react-router-dom
+
 
 GeolocationgetCurrentPosition():
 	https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition

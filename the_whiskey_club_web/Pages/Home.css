@@ -138,7 +138,7 @@
 
 .u-section-2 .u-image-1 {
   min-height: 590px;
-  background-image: url("images/pexels-photo-9698083.jpeg");
+  background-image: url("images/person1.jpeg");
   background-position: 50% 50%;
 }
 
@@ -254,4 +254,20 @@
   .u-section-2 .u-image-1 {
     min-height: 425px;
   }
+}
+
+ul.navChes {
+ padding-left: 0px;
+ text-align: center;
+}
+ul.navChes > li {
+ display: inline-block;
+ padding: 10px 20px;
+}
+ul.navChes > li:hover {
+ color: #C98A55;
+}
+ul.navChes > li > a {
+ color: white;
+ text-decoration: none;
 }

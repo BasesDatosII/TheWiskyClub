@@ -8,6 +8,6 @@ import MapAPI from "./MapAPI";
 
 export function App(){
     return (<div>
-      <MapAPI></MapAPI>
+        <MapAPI></MapAPI>
     </div>);
 }

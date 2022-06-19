@@ -1,0 +1,64 @@
+https://www.youtube.com/watch?v=WZcxJGmLbSo
+
+Into a to a folder do you will get the app to install all dependencies there
+
+Install api package to this map
+	https://www.npmjs.com/package/@react-google-maps/api
+------->>>
+		with NPM	
+			npm i -S @react-google-maps/api
+		with Yarn
+			yarn add @react-google-maps/api
+	
+
+Install usePlacesAutocomplete package to get people location google places 
+	https://www.npmjs.com/package/use-places-autocomplete
+
+	 	yarn add use-places-autocomplete
+ 		or
+		npm install --save use-places-autocomplete
+
+		typescript too
+
+		yarn add --dev @types/google.maps
+		or
+		npm install --save-dev @types/google.maps
+------->>>	
+		then, we need the api permisions and get the key 
+
+		https://developers.google.com/maps/documentation/javascript/places#enable_apis
+		https://developers.google.com/maps/documentation/javascript/get-api-key	
+
+		Get api key : https://youtu.be/2_HZObVbe-g
+		
+---->>>
+
+	npm install date-fns --save
+	# or with yarn
+	yarn add date-fns
+
+
+Install combobox to show results
+	https://reach.tech/combobox/
+
+	npm install @reach/combobox
+	# or
+	yarn add @reach/combobox
+Install react router
+	npm install react-router-dom
+	or 
+	yarn add react-router-dom
+
+
+GeolocationgetCurrentPosition():
+	https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition
+
+Sleazzymaps:
+	https://snazzymaps.com/style/8097/wy
+SVGrepo to que images:
+	https://www.svgrepo.com/svg/388230/people
+
+
+OUR KEY: 
+AIzaSyC1ZKXrbb__T-dBzt85y1dORbCkhNJ7Y0Q
+

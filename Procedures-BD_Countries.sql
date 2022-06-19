@@ -43,6 +43,7 @@ BEGIN
 	#UPDATING PRODUCT TYPE DATABASE INFORMATION
 	SET result = "";
 	#CHECKS IF PRODUCTTYPID EXISTS
+    START TRANSACTION;
 	IF (pIdProductType IS NOT NULL AND (SELECT COUNT(idProductType) FROM ProductType WHERE idProductType = pIdProductType) > 0) THEN
 		BEGIN
 			#UPDATING TYPENAME
@@ -61,7 +62,10 @@ BEGIN
             #UPDATING ACTIVE
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
+					#PRODUCT TYPE ACTIVE
 					UPDATE ProductType SET isActive = pIsActive WHERE idProductType = pIdProductType;
+                    #PRODUCTS WITH THAT PRODUCT TYPE ACTIVE
+					UPDATE Product SET isActive = 1 WHERE idProductType = pIdProductType;
                     SET result = CONCAT(result, 'The Product Type is now active\n');
                 END;
 			END IF;
@@ -70,6 +74,7 @@ BEGIN
 	ELSE
 		SET result = "The Product Type ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -79,9 +84,15 @@ BEGIN
 	#DEACTIVATING PRODUCTTYPE
 	IF ((SELECT COUNT(idProductType) FROM ProductType WHERE idProductType = pIdProductType) > 0) THEN
 		BEGIN
-			UPDATE ProductType SET isActive = 0 WHERE idProductType = pIdProductType;
-            SET result = "The Product Type is now inactive";
-            #cascade here
+			START TRANSACTION;
+				#PRODUCT TYPE INACTIVE
+				UPDATE ProductType SET isActive = 0 WHERE idProductType = pIdProductType;
+                #PRODUCTS WITH THAT TYPE INACTIVE
+                UPDATE Product SET isActive = 0 WHERE idProductType = pIdProductType;
+                #INVENTORYS WITH PRODUCTS WITH THAT PRODUCT TYPE INACTIVE
+                #UPDATE Inventory SET isActive = 0 WHERE idProduct IN (SELECT idProduct FROM Product WHERE idProductType = pIdProductType);
+				SET result = "The Product Type is now inactive";
+			COMMIT;
         END;
 	ELSE
 		SET result = "The ID specified doesn´t exists";
@@ -130,6 +141,7 @@ BEGIN
 	#UPDATING SUPPLIER DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF SUPPLIER ID EXISTS
+    START TRANSACTION;
 	IF (pIdSupplier IS NOT NULL AND (SELECT COUNT(idSupplier) FROM Supplier WHERE idSupplier = pIdSupplier) > 0) THEN
 		BEGIN
 			#UPDATING SUPPLIER NAME
@@ -157,6 +169,7 @@ BEGIN
 	ELSE
 		SET result = "The Supplier ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER 
 
@@ -168,7 +181,6 @@ BEGIN
 		BEGIN
 			UPDATE Supplier SET isActive = 0 WHERE idSupplier = pIdSupplier;
             SET result = "The Supplier is now inactive";
-            #cascade here
         END;
 	ELSE
 		SET result = "The ID specified doesn´t exists";
@@ -177,106 +189,8 @@ END //
 DELIMITER ;
 
 ##################################################################################################
-# CRUD Presentation
-##################################################################################################
-DELIMITER //
-CREATE PROCEDURE CPresentation (IN pAmountBottles INT, IN pSizeBottle INT, OUT result VARCHAR(16383))
-BEGIN
-	#CREATING A PRESENTATION
-    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
-	IF (pAmountBottles IS NOT NULL AND pSizeBottle IS NOT NULL) THEN
-		BEGIN
-			IF (pAmountBottles > 0 AND pSizeBottle > 0) THEN
-				BEGIN
-					IF ((SELECT COUNT(idPresentation) FROM Presentation WHERE amountBottles = pAmountBottles AND sizeBottle = pSizeBottle) = 0) THEN
-						BEGIN
-							INSERT INTO Presentation (amountBottles, sizeBottle) VALUES (pAmountBottles, pSizeBottle);
-							SET result = "The Presentation has been added";
-						END;
-					ELSE
-						SET result = "There is already a Presentation with that parameters";
-					END IF;
-                END;
-			ELSE
-				SET result = "The Amount or Size of the Bottles needs to be greater than 0";
-			END IF;
-		END;
-	ELSE
-		SET result = "The Amount or Size of the Bottles can't be NULL";
-    END IF;
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE RPresentation (IN pIdPresentation INT, IN pAmountBottles INT, IN pSizeBottle INT)
-BEGIN
-	#READING PRESENTATION DATABASE INFORMATION
-	SELECT idPresentation AS 'Presentation ID', amountBottles AS 'Amount of Bottles', sizeBottle AS 'Size of the Bottles'
-    FROM Presentation WHERE idPresentation = IFNULL(pIdPresentation, idPresentation) AND amountBottles = IFNULL(pAmountBottles, amountBottles)
-    AND sizeBottle = IFNULL(pSizeBottle, sizeBottle);
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE UPresentation (IN pIdPresentation INT, IN pAmountBottles INT, IN pSizeBottle INT, OUT result VARCHAR(16383))
-BEGIN
-	#UPDATING PRESENTATION DATABASE INFORMATION
-	SET result = "";
-    #CHECKS IF PRESENTATION ID EXISTS
-	IF (pIdPresentation IS NOT NULL AND (SELECT COUNT(IdPresentation) FROM Presentation WHERE idPresentation = pIdPresentation) > 0) THEN
-		BEGIN
-			#UPDATE AMOUNT OF BOTTLES
-			IF (pAmountBottles IS NOT NULL) THEN
-				BEGIN
-					IF (pAmountBottles > 0) THEN
-						BEGIN
-							UPDATE Presentation SET amountBottles = pAmountBottles WHERE idPresentation = pIdPresentation;
-							SET result = CONCAT(result, 'The Amount of Bottles has been updated\n');
-						END;
-					ELSE
-						SET result = CONCAT(result, 'The Amount of Bottles needs to be greater than 0\n');
-					END IF;
-				END;
-			END IF;
-            #UPDATE SIZE OF BOTTLES
-            IF (pSizeBottle IS NOT NULL) THEN
-				BEGIN
-					IF (pSizeBottle > 0) THEN
-						BEGIN
-							UPDATE Presentation SET sizeBottle = pSizeBottle WHERE idPresentation = pIdPresentation;
-							SET result = CONCAT(result, 'The Size of the Bottles has been updated\n');
-						END;
-					ELSE
-						SET result = CONCAT(result, 'The Size of Bottles needs to be greater than 0\n');
-					END IF;
-                END;
-			END IF;
-            SET result = CONCAT(result, 'Changes made successfully \n');
-		END;
-	ELSE
-		SET result = "The Presentation ID can't be NULL or the ID specified doesn´t exists";
-	END IF;
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE DPresentation (IN pIdPresentation INT, OUT result VARCHAR(16383))
-BEGIN
-	#DELETING PRESENTATION
-	IF ((SELECT COUNT(idPresentation) FROM Presentation WHERE idPresentation = pIdPresentation) > 0) THEN
-		BEGIN
-			DELETE FROM Presentation WHERE idPresentation = pIdPresentation;
-            SET result = "The Presentation has been removed";
-            #cascade here
-        END;
-	ELSE
-		SET result = "The ID specified doesn´t exists";
-	END IF;
-END //
-DELIMITER ;
-
 # CRUD Cash
-
+##################################################################################################
 DELIMITER //
 CREATE PROCEDURE CCash (IN pCashType VARCHAR(20), OUT result VARCHAR(16383))
 BEGIN
@@ -344,7 +258,6 @@ BEGIN
 		BEGIN
 			DELETE FROM Cash WHERE idCash = pIdCash;
             SET result = "The Cash has been removed";
-            #cascade here
         END;
 	ELSE
 		SET result = "The ID specified doesn´t exists";
@@ -357,49 +270,43 @@ DELIMITER ;
 ##################################################################################################
 DELIMITER //
 CREATE PROCEDURE CProduct (IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2), IN pIdProductType INT, IN pImage BLOB,
-					IN pIdSupplier INT, IN pIdPresentation INT, IN pIdCash INT, IN pTier INT, IN pProductDescr VARCHAR(200), OUT result VARCHAR(16383))
+					IN pIdSupplier INT, IN pIdCash INT, IN pTier INT, IN pProductDescr VARCHAR(200), OUT result VARCHAR(16383))
 BEGIN
 	#CREATING PRODUCT
     #CHECKING DATA TYPES AND WHAT THEY CONTAIN
 	IF (pProductName IS NOT NULL AND pCost IS NOT NULL AND pIdProductType IS NOT NULL AND pIdSupplier IS NOT NULL
-		 AND pIdPresentation IS NOT NULL AND pIdCash IS NOT NULL AND pTier IS NOT NULL AND pProductDescr IS NOT NULL) THEN
+		 IS NOT NULL AND pIdCash IS NOT NULL AND pTier IS NOT NULL AND pProductDescr IS NOT NULL) THEN
 		BEGIN
 			IF (pCost > 0 AND pTier BETWEEN 1 AND 3) THEN
 				BEGIN
 					IF ((SELECT COUNT(idProduct) FROM Product WHERE productName = pProductName) = 0) THEN
 						BEGIN
-							IF ((SELECT COUNT(idProductType) FROM ProductType WHERE idProductType = pIdProductType) > 0) THEN
+							IF ((SELECT COUNT(idProductType) FROM ProductType WHERE idProductType = pIdProductType AND isActive = 1) > 0) THEN
 								BEGIN
-									IF ((SELECT COUNT(idSupplier) FROM Supplier WHERE idSupplier = pIdSupplier) > 0) THEN
+									IF ((SELECT COUNT(idSupplier) FROM Supplier WHERE idSupplier = pIdSupplier AND isActive = 1) > 0) THEN
 										BEGIN
-											IF ((SELECT COUNT(idPresentation) FROM Presentation WHERE idPresentation = pIdPresentation) > 0) THEN
+											IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
 												BEGIN
-													IF ((SELECT COUNT(idCash) FROM Cash WHERE idCash = pIdCash) > 0) THEN
+													IF (pProductDescr != "") THEN
 														BEGIN
-															IF (pProductDescr != "") THEN
-																BEGIN
-																	INSERT INTO Product (productName, cost, idProductType, image, idSupplier, idPresentation, idCash, isActive, entryDate, tier, productDescr)
-																	VALUES (pProductName, pCost, pIdProductType, pImage, pIdSupplier, pIdPresentation, pIdCash, 1, CURRENT_DATE(), pTier, pProductDescr);
-																	SET result = "The Presentation has been added";
-																END;
-															ELSE
-																SET result = "The Product Description can't be empty";
-															END IF;
-                                                        END;
+															INSERT INTO Product (productName, cost, idProductType, image, idSupplier, idCash, isActive, entryDate, tier, productDescr)
+															VALUES (pProductName, pCost, pIdProductType, pImage, pIdSupplier, pIdCash, 1, CURRENT_DATE(), pTier, pProductDescr);
+															SET result = "The Presentation has been added";
+														END;
 													ELSE
-														SET result = "The Cash ID specified doesn´t exists";
-                                                    END IF;
+														SET result = "The Product Description can't be empty";
+													END IF;
 												END;
 											ELSE
-												SET result = "The Presentation ID specified doesn´t exists";
-                                            END IF;
+												SET result = "The Cash ID specified doesn´t exists";
+											END IF;
 										END;
 									ELSE
-										SET result = "The Supplier ID specified doesn´t exists";
+										SET result = "The Supplier ID specified doesn´t exists or is inactive";
 									END IF;
 								END;
 							ELSE
-								SET result = "The Product Type ID specified doesn´t exists";
+								SET result = "The Product Type ID specified doesn´t exists or is inactive";
 							END IF;
 						END;
 					ELSE
@@ -418,13 +325,13 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE RProduct (IN pIdProduct INT, IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2), IN pIdProductType INT, IN pIdSupplier INT,
-							IN pIdPresentation INT, IN pIdCash INT, IN pIsActive BIT, IN pEntryDate DATE,IN pTier INT, IN pProductDescr VARCHAR(200))
+							IN pIdCash INT, IN pIsActive BIT, IN pEntryDate DATE,IN pTier INT, IN pProductDescr VARCHAR(200))
 BEGIN
 	#READING PRODUCT DATABASE INFORMATION
 	SELECT idProduct AS 'Product ID', productName AS 'Product Name', cost AS 'Product Cost', idProductType AS 'Product Type ID', image AS 'Image', idSupplier AS 'Supplier ID',
-		idPresentation AS 'Presentation ID', idCash AS 'Cash ID', isActive AS 'Active', entryDate AS 'Entry Date', tier AS 'Tier', productDescr AS 'Product Description'
+		idCash AS 'Cash ID', isActive AS 'Active', entryDate AS 'Entry Date', tier AS 'Tier', productDescr AS 'Product Description'
     FROM Product WHERE idProduct = IFNULL(pIdProduct, idProduct) AND productName = IFNULL(pProductName, productName) AND cost = IFNULL(pCost, cost)
-		AND idProductType = IFNULL(pIdProductType, idProductType) AND idSupplier = IFNULL(pIdSupplier, idSupplier) AND idPresentation = IFNULL(pIdPresentation, idPresentation)
+		AND idProductType = IFNULL(pIdProductType, idProductType) AND idSupplier = IFNULL(pIdSupplier, idSupplier)
 		AND idCash = IFNULL(pIdCash, idCash) AND isActive = IFNULL(pIsActive, isActive) AND entryDate = IFNULL(pEntryDate, entryDate)
 		AND tier = IFNULL(pTier, tier) AND productDescr = IFNULL(pProductDescr, productDescr);
 END //
@@ -432,11 +339,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE UProduct (IN pIdProduct INT, IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2), IN pIdProductType INT, IN pImage BLOB, IN pIdSupplier INT, 
-							IN pIdPresentation INT, IN pIdCash INT, IN pIsActive BIT, IN pEntryDate DATE,IN pTier INT, IN pProductDescr VARCHAR(200), OUT result VARCHAR(16383))
+							IN pIdCash INT, IN pIsActive BIT, IN pEntryDate DATE,IN pTier INT, IN pProductDescr VARCHAR(200), OUT result VARCHAR(16383))
 BEGIN
 	 #UPDATING PRODUCT DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF PRODUCT ID EXISTS
+    START TRANSACTION;
 	IF (pIdProduct IS NOT NULL AND (SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
 		BEGIN
 			#UPDATING PRODUCT NAME
@@ -498,19 +406,6 @@ BEGIN
 					END IF;
                 END;
 			END IF;
-            #UPDATING PRESENTATION
-			IF (pIdPresentation IS NOT NULL) THEN
-				BEGIN
-					IF ((SELECT COUNT(idPresentation) FROM Presentation WHERE idPresentation = pIdPresentation) > 0) THEN
-						BEGIN
-							UPDATE Product SET idPresentation = pIdPresentation WHERE idProduct = pIdProduct;
-							SET result = CONCAT(result, 'The Presentation ID has been modified\n');
-						END;
-					ELSE
-						SET result = CONCAT(result, 'The Presentation ID specified doesn´t exists\n');
-					END IF;
-                END;
-			END IF;
             #UPDATING CASH
 			IF (pIdCash IS NOT NULL) THEN
 				BEGIN
@@ -527,7 +422,10 @@ BEGIN
             #UPDATING ISACTIVE
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
+					#PRODUCT ACTIVE
 					UPDATE Product SET isActive = pIsActive WHERE idProduct = pIdProduct;
+                    #INVENTORYS WITH THAT PRODUCT ACTIVE
+					UPDATE Inventory SET isActive = 1 WHERE idProduct = pIdProduct;
                     SET result = CONCAT(result, 'The Product is now active\n');
                 END;
 			END IF;
@@ -569,7 +467,7 @@ BEGIN
 	ELSE
 		SET result = "The Product ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
-    
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -579,9 +477,131 @@ BEGIN
 	#DEACTIVATING PRODUCT
 	IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
 		BEGIN
-			UPDATE Product SET isActive = 0 WHERE idProduct = pIdProduct;
-            SET result = "The Product is now inactive";
-            #cascade here
+			START TRANSACTION;
+				#PRODUCT INACTIVE
+				UPDATE Product SET isActive = 0 WHERE idProduct = pIdProduct;
+                #INVENTORYS WITH THAT PRODUCT INACTIVE
+                UPDATE Inventory SET isActive = 0 WHERE idProduct = pIdProduct;
+				SET result = "The Product is now inactive";
+            COMMIT;
+        END;
+	ELSE
+		SET result = "The ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+##################################################################################################
+# CRUD Presentation
+##################################################################################################
+DELIMITER //
+CREATE PROCEDURE CPresentation (IN pIdProduct INT, IN pAmountBottles INT, IN pSizeBottle INT, OUT result VARCHAR(16383))
+BEGIN
+	#CREATING A PRESENTATION
+    #CHECKING DATA TYPES AND WHAT THEY CONTAIN
+	IF (pIdProduct IS NOT NULL AND pAmountBottles IS NOT NULL AND pSizeBottle IS NOT NULL) THEN
+		BEGIN
+			IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
+				BEGIN
+					IF (pAmountBottles > 0 AND pSizeBottle > 0) THEN
+						BEGIN
+							IF ((SELECT COUNT(idPresentation) FROM Presentation WHERE idProduct = pIdProduct AND amountBottles = pAmountBottles AND sizeBottle = pSizeBottle) = 0) THEN
+								BEGIN
+									INSERT INTO Presentation (idProduct, amountBottles, sizeBottle) VALUES (pIdProduct, pAmountBottles, pSizeBottle);
+									SET result = "The Presentation has been added";
+								END;
+							ELSE
+								SET result = "There is already a Presentation with that parameters";
+							END IF;
+						END;
+					ELSE
+						SET result = "The Amount or Size of the Bottles needs to be greater than 0";
+					END IF;
+				END;
+			ELSE
+				SET result = "The Product ID specified doesn´t exists";
+			END IF;
+		END;
+	ELSE
+		SET result = "Any of the parameters can't be NULL";
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE RPresentation (IN pIdPresentation INT, IN pIdProduct INT, IN pAmountBottles INT, IN pSizeBottle INT)
+BEGIN
+	#READING PRESENTATION DATABASE INFORMATION
+	SELECT idPresentation AS 'Presentation ID', idProduct AS 'Product ID',
+    amountBottles AS 'Amount of Bottles', sizeBottle AS 'Size of the Bottles'
+    FROM Presentation WHERE idPresentation = IFNULL(pIdPresentation, idPresentation) AND idProduct = IFNULL(pIdProduct, idProduct)
+    AND amountBottles = IFNULL(pAmountBottles, amountBottles) AND sizeBottle = IFNULL(pSizeBottle, sizeBottle);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE UPresentation (IN pIdPresentation INT, IN pIdProduct INT, IN pAmountBottles INT, IN pSizeBottle INT, OUT result VARCHAR(16383))
+BEGIN
+	#UPDATING PRESENTATION DATABASE INFORMATION
+	SET result = "";
+    #CHECKS IF PRESENTATION ID EXISTS
+	IF (pIdPresentation IS NOT NULL AND (SELECT COUNT(IdPresentation) FROM Presentation WHERE idPresentation = pIdPresentation) > 0) THEN
+		BEGIN
+			#UPDATE PRODUCT ID
+            IF (pIdProduct IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
+						BEGIN
+							UPDATE Presentation SET idProduct = pIdProduct WHERE idPresentation = pIdPresentation;
+							SET result = CONCAT(result, 'The Product ID has been updated\n');
+						END;
+					ELSE
+						SET result = CONCAT(result, 'The Product ID specified doesn´t exists\n');
+					END IF;
+				END;
+			END IF;
+			#UPDATE AMOUNT OF BOTTLES
+			IF (pAmountBottles IS NOT NULL) THEN
+				BEGIN
+					IF (pAmountBottles > 0) THEN
+						BEGIN
+							UPDATE Presentation SET amountBottles = pAmountBottles WHERE idPresentation = pIdPresentation;
+							SET result = CONCAT(result, 'The Amount of Bottles has been updated\n');
+						END;
+					ELSE
+						SET result = CONCAT(result, 'The Amount of Bottles needs to be greater than 0\n');
+					END IF;
+				END;
+			END IF;
+            #UPDATE SIZE OF BOTTLES
+            IF (pSizeBottle IS NOT NULL) THEN
+				BEGIN
+					IF (pSizeBottle > 0) THEN
+						BEGIN
+							UPDATE Presentation SET sizeBottle = pSizeBottle WHERE idPresentation = pIdPresentation;
+							SET result = CONCAT(result, 'The Size of the Bottles has been updated\n');
+						END;
+					ELSE
+						SET result = CONCAT(result, 'The Size of Bottles needs to be greater than 0\n');
+					END IF;
+                END;
+			END IF;
+            SET result = CONCAT(result, 'Changes made successfully \n');
+		END;
+	ELSE
+		SET result = "The Presentation ID can't be NULL or the ID specified doesn´t exists";
+	END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE DPresentation (IN pIdPresentation INT, OUT result VARCHAR(16383))
+BEGIN
+	#DELETING PRESENTATION
+	IF ((SELECT COUNT(idPresentation) FROM Presentation WHERE idPresentation = pIdPresentation) > 0) THEN
+		BEGIN
+			DELETE FROM Presentation WHERE idPresentation = pIdPresentation;
+            SET result = "The Presentation has been removed";
         END;
 	ELSE
 		SET result = "The ID specified doesn´t exists";
@@ -630,6 +650,7 @@ BEGIN
 	 #UPDATING LOCATION DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF LOCATION ID EXISTS
+    START TRANSACTION;
 	IF (pIdLocation IS NOT NULL AND (SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 		BEGIN
 			#UPDATES LOCATION SPATIAL DATA
@@ -658,6 +679,7 @@ BEGIN
 	ELSE
 		SET result = "The Location ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -667,9 +689,10 @@ BEGIN
 	#DEACTIVATING LOCATION
 	IF ((SELECT COUNT(idLocation) FROM Location WHERE idLocation = pIdLocation) > 0) THEN
 		BEGIN
+			START TRANSACTION;
 			UPDATE Location SET isActive = 0 WHERE idLocation = pIdLocation;
-            SET result = "The Product Type is now inactive";
-            #cascade here
+            SET result = "The Location is now inactive";
+            COMMIT;
         END;
 	ELSE
 		SET result = "The ID specified doesn´t exists";
@@ -742,9 +765,10 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE UClub (IN pIdClub INT, IN pClubName VARCHAR(20), IN pIdLocation INT, IN pDeliveryCostProp FLOAT, IN pIdCash INT, IN pIsActive BIT, OUT result VARCHAR(16383))
 BEGIN
-	 #UPDATING CLUB DATABASE INFORMATION
+	#UPDATING CLUB DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF CLUB ID EXISTS
+    START TRANSACTION;
 	IF (pIdClub IS NOT NULL AND (SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
 		BEGIN
 			#UPDATING CLUB NAME
@@ -808,7 +832,13 @@ BEGIN
             #UPDATING ACTIVE
             IF (pIsActive IS NOT NULL AND pIsActive = 1) THEN
 				BEGIN
+					#CLUB ACTIVE
 					UPDATE Club SET isActive = pIsActive WHERE idClub = pIdClub;
+                    #LOCATION OF CLUB ACTIVE
+                    UPDATE Location SET isActive = 0 WHERE idLocation = (
+					SELECT idLocation FROM Club WHERE idClub = pIdClub);
+					#INVENTORY'S OF THE CLUB ACTIVE
+					UPDATE Inventory SET isActive = 0 WHERE idClub = pIdClub;
                     SET result = CONCAT(result, 'The Club is now active\n');
                 END;
 			END IF;
@@ -817,6 +847,7 @@ BEGIN
 	ELSE
 		SET result = "The Club ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -826,9 +857,16 @@ BEGIN
 	#DEACTIVATING CLUB
 	IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
 		BEGIN
+			START TRANSACTION;
+			#CLUB INACTIVE
 			UPDATE Club SET isActive = 0 WHERE idClub = pIdClub;
+            #LOCATION INACTIVE
+            UPDATE Location SET isActive = 0 WHERE idLocation = (
+            SELECT idLocation FROM Club WHERE idClub = pIdClub);
+            #INVENTORY INACTIVE
+            UPDATE Inventory SET isActive = 0 WHERE idClub = pIdClub;
             SET result = "The Club is now inactive";
-            #cascade here
+            COMMIT;
         END;
 	ELSE
 		SET result = "The ID specified doesn´t exists";
@@ -890,6 +928,7 @@ BEGIN
 	 #UPDATING INVENTORY DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF INVENTORY ID EXISTS
+    START TRANSACTION;
 	IF (pIdInventory IS NOT NULL AND (SELECT COUNT(idInventory) FROM Inventory WHERE idInventory = pIdInventory) > 0) THEN
 		BEGIN
 			#UPDATING CLUB ID
@@ -920,8 +959,8 @@ BEGIN
 					#IF STOCK > 0 ADDS MORE STOCK
 					IF (pStock > 0) THEN
 						BEGIN
-							SET @cantAct = (SELECT stock FROM Inventory WHERE idInventory = pIdInventory);
-							UPDATE Inventory SET stock = (@cantAct + pStock) WHERE idInventory = pIdInventory;
+							SET @ActAmount = (SELECT stock FROM Inventory WHERE idInventory = pIdInventory);
+							UPDATE Inventory SET stock = (@ActAmount + pStock) WHERE idInventory = pIdInventory;
 							SET result = CONCAT(result, 'The Stock has been modified\n');
 						END;
 					#IF STOCK = 0 RESETS STOCK
@@ -945,6 +984,7 @@ BEGIN
 	ELSE
 		SET result = "The Inventory ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -954,9 +994,10 @@ BEGIN
 	#DEACTIVATING INVENTORY
 	IF ((SELECT COUNT(idInventory) FROM Inventory WHERE idInventory = pIdInventory) > 0) THEN
 		BEGIN
+			START TRANSACTION;
 			UPDATE Inventory SET isActive = 0 WHERE idInventory = pIdInventory;
             SET result = "The Inventory is now inactive";
-            #cascade here
+            COMMIT;
         END;
 	ELSE
 		SET result = "The ID specified doesn´t exists";
@@ -993,22 +1034,23 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE RClientUser (IN pIdClientUser INT, IN pUserPassword VARCHAR(30), IN pIsActive BIT)
+CREATE PROCEDURE RClientUser (IN pIdClientUser INT, IN pUserPassword BLOB, IN pIsActive BIT)
 BEGIN
 	#READING CLIENT USER DATABASE INFORMATION
     #DECRYPTING CLIENT USER PASSWORD
-	SELECT idClientUser AS 'Client User ID', AES_DECRYPT(userPassword) AS 'User Password', isActive AS 'Active'
+	SELECT idClientUser AS 'Client User ID', AES_DECRYPT(userPassword, 'Bases2') AS 'User Password', isActive AS 'Active'
     FROM ClientUser WHERE idClientUser = IFNULL(pIdClientUser, idClientUser) AND userPassword = IFNULL(AES_DECRYPT(pUserPassword, 'Bases2'), userPassword)
     AND isActive = IFNULL(pIsActive, isActive);
 END //
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE UClientUser (IN pIdClientUser INT, IN pUserPassword VARCHAR(30), IN pIsActive BIT, OUT result VARCHAR(16383))
+CREATE PROCEDURE UClientUser (IN pIdClientUser INT, IN pUserPassword BLOB, IN pIsActive BIT, OUT result VARCHAR(16383))
 BEGIN
 	 #UPDATING CLIENT USER DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF CLIENT USER ID EXISTS
+    START TRANSACTION;
 	IF (pIdClientUser IS NOT NULL AND (SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
 		BEGIN
 			#UPDATING USER PASSWORD
@@ -1036,6 +1078,7 @@ BEGIN
 	ELSE
 		SET result = "The Client User ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -1045,9 +1088,13 @@ BEGIN
 	#DEACTIVATING CLIENT USER
 	IF ((SELECT COUNT(idClientUser) FROM ClientUser WHERE idClientUser = pIdClientUser) > 0) THEN
 		BEGIN
-			UPDATE ClientUser SET isActive = 0 WHERE idClientUser = pIdClientUser;
-            SET result = "The Client User is now inactive";
-            #cascade here
+			START TRANSACTION;
+				UPDATE ClientUser SET isActive = 0 WHERE idClientUser = pIdClientUser;
+				SET result = "The Client User is now inactive";
+				SET @ActId = (SELECT idClientPeople FROM ClientPeople WHERE idClientUser = pIdClientUser);
+				#THIS CALL UNACTIVE CLIENT PEOPLE ID AND ALSO CALLS DINFOPEOPLE TO UNACTIVE INFO PEOPLE ID
+				CALL DClientPeople (@ActId, @result);
+			COMMIT;
         END;
 	ELSE
 		SET result = "The ID specified doesn´t exists";
@@ -1125,6 +1172,7 @@ BEGIN
 	 #UPDATING INFOPEOPLE DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF INFOPEOPLE ID EXISTS
+    START TRANSACTION;
 	IF (pIdInfoPeople IS NOT NULL AND (SELECT COUNT(idInfoPeople) FROM InfoPeople WHERE idInfoPeople = pIdInfoPeople) > 0) THEN
 		BEGIN
 			#UPDATING PEOPLE NAME
@@ -1205,6 +1253,7 @@ BEGIN
 	ELSE
 		SET result = "The Info People ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -1216,7 +1265,7 @@ BEGIN
 		BEGIN
 			UPDATE InfoPeople SET isActive = 0 WHERE idInfoPeople = pIdInfoPeople;
             SET result = "The Client Information is now inactive";
-            #cascade here
+            
         END;
 	ELSE
 		SET result = "The ID specified doesn´t exists";
@@ -1274,6 +1323,7 @@ BEGIN
 	 #UPDATING CLIENT PEOPLE DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF CLIENT PEOPLE EXISTS
+	START TRANSACTION;
 	IF (pIdClientPeople IS NOT NULL AND (SELECT COUNT(idClientPeople) FROM ClientPeople WHERE idClientPeople = pIdClientPeople) > 0) THEN
 		BEGIN
 			#UPDATING CLIENT USER ID
@@ -1327,6 +1377,7 @@ BEGIN
 	ELSE
 		SET result = "The Client People ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -1336,9 +1387,12 @@ BEGIN
 	#DEACTIVATING CLIENT PEOPLE
 	IF ((SELECT COUNT(idClientPeople) FROM ClientPeople WHERE idClientPeople = pIdClientPeople) > 0) THEN
 		BEGIN
+			#CLIENT PEOPLE INACTIVE
 			UPDATE ClientPeople SET isActive = 0 WHERE idClientPeople = pIdClientPeople;
+            #CALLS DINFOPEOPLE TO DEACTIVATE INFO PEOPLE OF THIS CLIENT
+            SET @ActId = (SELECT idInfoPeople FROM ClientPeople WHERE idClientPeople = pIdClientPeople);
+            CALL DInfoPeople(@ActId, @result);
             SET result = "The Client Information is now inactive";
-            #cascade here
         END;
 	ELSE
 		SET result = "The ID specified doesn´t exists";
@@ -1683,6 +1737,7 @@ BEGIN
 	 #UPDATING MEMBERSHIP DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF MEMBERSHIP ID EXISTS
+    START TRANSACTION;
 	IF (pIdMembership IS NOT NULL AND (SELECT COUNT(idMembership) FROM Membership WHERE idMembership = pIdMembership) > 0) THEN
 		BEGIN
 			#UPDATING MEMBERSHIP NAME
@@ -1749,6 +1804,7 @@ BEGIN
 	ELSE
 		SET result = 'The Membership ID can´t be NULL or the ID specified doesn´t exists\n';
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -1758,9 +1814,10 @@ BEGIN
 	#DEACTIVATING MEMBERSHIP
 	IF ((SELECT COUNT(idMembership) FROM Membership WHERE idMembership = pIdMembership) > 0) THEN
 		BEGIN
+			START TRANSACTION;
 			UPDATE Membership SET isActive = 0 WHERE idMembership = pIdMembership;
             SET result = "The Client Information is now inactive";
-            #cascade here
+            COMMIT;
         END;
 	ELSE
 		SET result = "The ID specified doesn´t exists";
@@ -1828,6 +1885,7 @@ BEGIN
 	#UPDATING CLIENT MEMBERSHIP
 	SET result = "";
     #CHECKS IF CLIENT MEMBERSHIP ID EXISTS
+    START TRANSACTION;
 	IF (pIdClientMembership IS NOT NULL AND (SELECT COUNT(idClientMembership) FROM ClientMembership WHERE idClientMembership = pIdClientMembership) > 0) THEN
 		BEGIN
 			#UPDATING MEMBERSHIP ID
@@ -1868,6 +1926,7 @@ BEGIN
 	ELSE
 		SET result = "The Client Membership ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -1877,9 +1936,10 @@ BEGIN
 	#DELETING CLIENT MEMBERSHIP
 	IF ((SELECT COUNT(idClientMembership) FROM ClientMembership WHERE idClientMembership = pIdClientMembership) > 0) THEN
 		BEGIN
+			START TRANSACTION;
 			DELETE FROM ClientMembership WHERE idClientMembership = pIdClientMembership;
             SET result = "The Client Membership has been removed";
-            #cascade here
+            COMMIT;
         END;
 	ELSE
 		SET result = "The Client Membership ID specified doesn´t exists";
@@ -1932,6 +1992,7 @@ BEGIN
 	 #UPDATING WORKER REVIEW DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF WORKER REVIEW ID EXISTS
+    START TRANSACTION;
 	IF (pIdWorkerReview IS NOT NULL AND (SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
 		BEGIN
 			#UPDATING CLIENT USER ID
@@ -1972,6 +2033,7 @@ BEGIN
 	ELSE
 		SET result = "The Worker Review ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -1981,9 +2043,15 @@ BEGIN
 	#DELETING WORKER REVIEW
 	IF ((SELECT COUNT(idWorkerReview) FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview) > 0) THEN
 		BEGIN
+			START TRANSACTION;
+            #DELETING QUALIFICATIONS FOR THAT WORKER REVIEW
+            DELETE FROM Qualification WHERE idWorkerReview = pIdWorkerReview;
+			#DELETING COMPLAINTS FOR THAT WORKER REVIEW
+			DELETE FROM Complaint WHERE idWorkerReview = pIdWorkerReview;
+            #DELETING WORKER REVIEW
 			DELETE FROM WorkerReview WHERE idWorkerReview = pIdWorkerReview;
             SET result = "The Worker Review has been removed";
-            #cascade here
+            COMMIT;
         END;
 	ELSE
 		SET result = "The Worker Review ID specified doesn´t exists";
@@ -2042,6 +2110,7 @@ BEGIN
 	 #UPDATING QUALIFICATION DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF QUALIFICATION ID EXISTS
+    START TRANSACTION;
 	IF (pIdQualification IS NOT NULL AND (SELECT COUNT(idQualification) FROM Qualification WHERE idQualification = pIdQualification) > 0) THEN
 		BEGIN
 			#UPDATING WORKER REVIEW ID
@@ -2075,6 +2144,7 @@ BEGIN
 	ELSE
 		SET result = "The Qualification ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -2084,9 +2154,10 @@ BEGIN
 	#DELETING QUALIFICATION
 	IF ((SELECT COUNT(idQualification) FROM Qualification WHERE idQualification = pIdQualification) > 0) THEN
 		BEGIN
+			START TRANSACTION;
 			DELETE FROM Qualification WHERE idQualification = pIdQualification;
             SET result = "The Qualification has been removed";
-            #cascade here
+            COMMIT;
         END;
 	ELSE
 		SET result = "The Qualification ID specified doesn´t exists";
@@ -2146,6 +2217,7 @@ BEGIN
 	 #UPDATING COMPLAINT DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF COMPLAINT ID EXISTS
+    START TRANSACTION;
 	IF (pIdComplaint IS NOT NULL AND (SELECT COUNT(idComplaint) FROM Complaint WHERE idComplaint = pIdComplaint) > 0) THEN
 		BEGIN
 			#UPDATING WORKER REVIEW ID
@@ -2186,6 +2258,7 @@ BEGIN
 	ELSE
 		SET result = "The Complaint ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -2195,9 +2268,10 @@ BEGIN
 	#DELETING COMPLAINT
 	IF ((SELECT COUNT(idComplaint) FROM Complaint WHERE idComplaint = pIdComplaint) > 0) THEN
 		BEGIN
+			START TRANSACTION;
 			DELETE FROM Complaint WHERE idComplaint = pIdComplaint;
             SET result = "The Complaint has been removed";
-            #cascade here
+            COMMIT;
         END;
 	ELSE
 		SET result = "The Complaint ID specified doesn´t exists";
@@ -2275,6 +2349,7 @@ BEGIN
 	 #UPDATING REVIEW DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF REVIEW ID EXISTS
+    START TRANSACTION;
 	IF (pIdReview IS NOT NULL AND (SELECT COUNT(idReview) FROM Review WHERE idReview = pIdReview) > 0) THEN
 		BEGIN
 			#UPDATING PRODUCT ID
@@ -2355,6 +2430,7 @@ BEGIN
 	ELSE
 		SET result = "The Review ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -2364,9 +2440,10 @@ BEGIN
 	#DELETING REVIEW
 	IF ((SELECT COUNT(idReview) FROM Review WHERE idReview = pIdReview) > 0) THEN
 		BEGIN
+			START TRANSACTION;
 			DELETE FROM Review WHERE idReview = pIdReview;
             SET result = "The Review has been removed";
-            #cascade here
+            COMMIT;
         END;
 	ELSE
 		SET result = "The Review ID specified doesn´t exists";
@@ -2423,6 +2500,7 @@ BEGIN
 	 #UPDATING POPULAR PRODUCTS DATABASE INFORMATION
 	SET result = "";
     #CHECKS IF POPULAR PRODUCTS ID EXISTS
+    START TRANSACTION;
 	IF ((pIdPopularProducts IS NOT NULL AND (SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts) > 0) OR
 		#IT CAN ALSO BE UPDATED BY THE PRODUCT ID (ONLY IN THE AMOUNT CASE)
 		(pIdProduct IS NOT NULL AND (SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) > 0)) THEN
@@ -2457,15 +2535,15 @@ BEGIN
 									#CHECKS ACTUAL AMOUNT DEPENDING ON KEY IDPOPULARPRODUCTS
                                     IF (pIdPopularProducts IS NOT NULL) THEN
 										BEGIN
-											SET @cantAct = (SELECT amount FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts);
-											UPDATE PopularProducts SET amount = (@cantAct + pAmount)
+											SET @ActAmount = (SELECT amount FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts);
+											UPDATE PopularProducts SET amount = (@ActAmount + pAmount)
 											WHERE idPopularProducts = pIdPopularProducts;
 										END;
 									#CHECKS ACTUAL AMOUNT DEPENDING ON KEY IDPRODUCT
 									ELSE IF (pIdProduct IS NOT NULL) THEN
 										BEGIN
-											SET @cantAct = (SELECT amount FROM PopularProducts WHERE idProduct = pIdProduct);
-											UPDATE PopularProducts SET amount = (@cantAct + pAmount)
+											SET @ActAmount = (SELECT amount FROM PopularProducts WHERE idProduct = pIdProduct);
+											UPDATE PopularProducts SET amount = (@ActAmount + pAmount)
 											WHERE idProduct = pIdProduct;
 										END;
 									END IF;
@@ -2489,6 +2567,7 @@ BEGIN
 	ELSE
 		SET result = "The Popular Products ID AND the Product ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
+    COMMIT;
 END //
 DELIMITER ;
 
@@ -2498,9 +2577,10 @@ BEGIN
 	#DELETING POPULAR PRODUCTS
 	IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts) > 0) THEN
 		BEGIN
+			START TRANSACTION;
 			DELETE FROM PopularProducts WHERE idPopularProducts = pIdPopularProducts;
             SET result = "The Popular Products has been removed";
-            #cascade here
+            COMMIT;
         END;
 	ELSE
 		SET result = "The Popular Products ID specified doesn´t exists";
@@ -2524,6 +2604,21 @@ BEGIN
 		INNER JOIN ClientPeople CP ON CL.idClientPeople = CP.idClientPeople
         INNER JOIN ClientUser CU ON CP.idClientUser = CU.idClientUser
 		WHERE CU.idClientUser = pIdClientUser AND CL.idClientLocation = pIdClientLocation)))) FROM Club WHERE idClub = pIdClub);
+END //
+DELIMITER ;
+
+#UPDATE CLIENT SALES COUNTER
+DELIMITER //
+CREATE PROCEDURE UClientSalesCounter (IN pIdClientUser INT, IN pAmount INT)
+BEGIN
+	#SETS NEW AMOUNT
+	SET @ActAmount = (SELECT salesCounter FROM ClientPeople CP INNER JOIN ClientUser CU ON CP.idClientUser = CU.idClientUser
+		WHERE CU.idClientUser = pIdClientUser);
+	#GETS CLIENT PEOPLE ID 
+	SET @ActId = (SELECT idClientPeople FROM ClientPeople CP INNER JOIN ClientUser CU ON CP.idClientUser = CU.idClientUser
+		WHERE CU.idClientUser = pIdClientUser);
+	#UPDATES SALES COUNTER
+	UPDATE ClientPeople SET salesCounter = (@ActAmount + pAmount) WHERE idClientPeople = @ActId;
 END //
 DELIMITER ;
 
@@ -2588,9 +2683,9 @@ BEGIN
 										IF ((SELECT isActive FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub) = 1) THEN
 											BEGIN
 												#SETS THE NEW AMOUNT OF THE INVENTORY
-												SET @cantAct = (SELECT stock - pAmount FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub);
+												SET @ActAmount = (SELECT stock - pAmount FROM Inventory WHERE idProduct = pIdProduct AND idClub = @idClub);
                                                 #IF < 0, THE STOCK DOESN'T IS ENOUGH
-												IF (@cantAct >= 0) THEN
+												IF (@ActAmount >= 0) THEN
 													BEGIN
 														#CHECKS IF THE PRODUCT IS ALREADY IN THE ORDER AND UPDATES THE VALUE IF IT IS
                                                         IF ((SELECT COUNT(idOrderLine) FROM OrderLine WHERE idOrderp = pIdOrderP AND idProduct = pIdProduct) > 0) THEN
@@ -2599,13 +2694,17 @@ BEGIN
 															INSERT INTO OrderLine (idOrderP, idProduct, cost, amount) VALUES
 															(pIdOrderP, pIdProduct, (SELECT cost FROM Product WHERE idProduct = pIdProduct), pAmount);
 														END IF;
-														UPDATE Inventory SET stock = @cantAct WHERE idProduct = pIdProduct AND idClub = @idClub;
+														UPDATE Inventory SET stock = @ActAmount WHERE idProduct = pIdProduct AND idClub = @idClub;
                                                         #UPDATES POPULAR PRODUCT SALES
                                                         IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) = 0) THEN
 															CALL CPopularProducts(pIdProduct, @result);
 														END IF;
                                                         #UPDATES POPULAR PRODUCTS ROW FOR THIS PRODUCT
                                                         CALL UPopularProducts(NULL, pIdProduct, pAmount, @result);
+                                                        #UPDATES CLIENT SALES COUNTER
+                                                        CALL UClientSalesCounter ((SELECT CU.idClientUser FROM ClientPeople CP INNER JOIN ClientUser CU
+															ON CP.idClientUser = CU.idClientUser WHERE idClientPeople = 
+                                                            (SELECT idClientPeople FROM OrderP WHERE idOrderP = pIdOrderP)), pAmount);
 														SET result = "Product bought succesfully";
 													END;
 												ELSE
@@ -2653,7 +2752,7 @@ DELIMITER ;
 CALL CProductType('Tabaco', @result);
 SELECT @result;
 CALL RProductType(NULL, NULL, NULL);
-CALL UProductType(1, 'Whiskey', 1, @result);
+CALL UProductType(1, 'Tabaco', 1, @result);
 SELECT @result;
 CALL DProductType(2,@result);
 SELECT @result;
@@ -2670,20 +2769,6 @@ SELECT @result;
 CALL DSupplier(1,@result);
 SELECT @result;
 SELECT * FROM Supplier;
-#################################################
-
-#PRESENTATION
-#################################################
-CALL CPresentation(500, 2, @result);
-SELECT @result;
-CALL CPresentation(1000, 2, @result);
-SELECT @result;
-CALL RPresentation(NULL, NULL, NULL);
-CALL UPresentation(1,1000,1, @result);
-SELECT @result;
-CALL DPresentation(2,@result);
-SELECT @result;
-SELECT * FROM Presentation;
 #################################################
 
 #CASH
@@ -2703,14 +2788,28 @@ SELECT * FROM Cash;
 #PRODUCT
 #################################################
 CALL CProduct("Whiskey", 2.62, 1, NULL,
-					1, 1, 1, 1, "Is Insane", @result);
+					1, 1, 1, "Is Insane", @result);
 SELECT @result;
-CALL RProduct(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, NULL);
-CALL UProduct(1,"Vodka",NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL, NULL, @result);
+CALL RProduct(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, NULL);
+CALL UProduct(1,"Vodka",NULL,NULL,NULL,NULL,NULL,1,NULL,NULL, NULL, @result);
 SELECT @result;
 CALL DProduct(1,@result);
 SELECT @result;
 SELECT * FROM Product;
+#################################################
+
+#PRESENTATION
+#################################################
+CALL CPresentation(1, 500, 2, @result);
+SELECT @result;
+CALL CPresentation(1, 1000, 2, @result);
+SELECT @result;
+CALL RPresentation(NULL, NULL, NULL, NULL);
+CALL UPresentation(1, NULL, 1000, 1, @result);
+SELECT @result;
+CALL DPresentation(2,@result);
+SELECT @result;
+SELECT * FROM Presentation;
 #################################################
 
 #LOCATION
@@ -2760,6 +2859,8 @@ CALL UClientUser(1,NULL,1, @result);
 SELECT @result;
 CALL DClientUser(1,@result);
 SELECT @result;
+SELECT * FROM ClientUser;
+SELECT * FROM ClientPeople;
 SELECT * FROM ClientUser;
 #################################################
 

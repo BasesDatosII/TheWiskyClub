@@ -7,12 +7,12 @@
     <meta name="description" content="">
     <title>Home</title>
 
-    <link rel="stylesheet" href="/homecss" media="screen">
+    <link rel="stylesheet" href="/Resource/Home.css" media="screen">
 
-    <link rel= "stylesheet" href="/nicepagecss" media="screen">
+    <link rel= "stylesheet" href="/Resource/nicepage.css" media="screen">
 
-    <script type="text/javascript" src="/jqueryjs">
-    <script class="u-script" type="text/javascript" src="/nicepagejs" defer="" /></script>
+    <script type="text/javascript" src="/Resource/jquery.js">
+    <script class="u-script" type="text/javascript" src="/Resource/nicepage.js" defer="" /></script>
 
     
     <meta name="generator" content="Nicepage 4.12.17, nicepage.com">
@@ -43,23 +43,23 @@
     <div class="u-clearfix u-sheet u-sheet-1">
         <a href="/" class="u-align-left u-image u-logo u-image-1" data-image-width="1411"
            data-image-height="222">
-            <img src="images/image9.png" class="u-logo-image u-logo-image-1">
+            <img src="/Resource/images/image9.png" class="u-logo-image u-logo-image-1">
         </a>
 
         <ul class="navChes">
 
             <li class="u-nav-item"><a class="u-button-style u-nav-link" href="/">Home</a></li>
-            <li class="u-nav-item"><a class="u-button-style u-nav-link" href="/Collectionhtml">Collection</a>
+            <li class="u-nav-item"><a class="u-button-style u-nav-link" href="/Resource/Collection.html">Collection</a>
             </li>
-            <li class="u-nav-item"><a class="u-button-style u-nav-link" href="Log-In">Log In</a>
+            <li class="u-nav-item"><a class="u-button-style u-nav-link" href="/Resource/Log-In.html">Log In</a>
             </li>
-            <li class="u-nav-item"><a class="u-button-style u-nav-link" href="Your-Account.html">Your
+            <li class="u-nav-item"><a class="u-button-style u-nav-link" href="/Resource/Your-Account.html">Your
                 account</a>
             </li>
-            <li class="u-nav-item"><a class="u-button-style u-nav-link" href="Cart.html">Cart</a>
+            <li class="u-nav-item"><a class="u-button-style u-nav-link" href="/Resource/Cart.html">Cart</a>
             </li>
 
-            <li class="u-nav-item"><a class="u-button-style u-nav-link" href="map.html">Map</a>
+            <li class="u-nav-item"><a class="u-button-style u-nav-link" href="/Resource/map.html">Map</a>
             </li>
 
         </ul>
@@ -74,7 +74,7 @@
         </h2>
         <h3 class="u-text u-text-body-alt-color u-text-3"> Duis aute irure dolor in reprehenderit in voluptate velit
             esse.</h3>
-        <a href="Collection.html" data-page-id="158127904"
+        <a href="/Resource/Collection.html" data-page-id="158127904"
            class="u-active-white u-align-center u-border-2 u-border-active-white u-border-hover-white u-border-white u-btn u-btn-round u-button-style u-hover-white u-none u-radius-8 u-btn-1">OUR
             COLLECTION</a>
     </div>
@@ -105,7 +105,7 @@
                     </div>
 
                     <div>
-                        <h3 class="u-custom-font u-font-montserrat u-text u-text-1" id="output" ></h3>
+                        <h3 class="u-custom-font u-font-montserrat u-text u-text-1" id="output"></h3>
                     </div>
                     <!-- Load Babel -->
 
@@ -136,16 +136,5 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <!-- Your custom script here -->
 
-<script type="text/babel">
-
-
-    const root = ReactDOM.createRoot(document.getElementById("output"));
-
-    root.render(<React.StrictMode>
-        <BrowserRouter>
-            <App />
-        </BrowserRouter>
-    </React.StrictMode>);
-</script>
 </body>
 </html>

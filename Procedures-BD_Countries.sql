@@ -291,7 +291,9 @@ BEGIN
 														BEGIN
 															INSERT INTO Product (productName, cost, idProductType, image, idSupplier, idCash, isActive, entryDate, tier, productDescr)
 															VALUES (pProductName, pCost, pIdProductType, pImage, pIdSupplier, pIdCash, 1, CURRENT_DATE(), pTier, pProductDescr);
-															SET result = "The Presentation has been added";
+                                                            #CREATES POPULAR PRODUCTS DATA FOR THIS PRODUCT
+															CALL CPopularProducts(LAST_INSERT_ID(), @result);
+															SET result = "The Product has been added";
 														END;
 													ELSE
 														SET result = "The Product Description can't be empty";
@@ -2743,6 +2745,51 @@ BEGIN
 END //
 DELIMITER ;
 
+DELIMITER //
+CREATE PROCEDURE ProductQuery (IN pIdProductType INT, IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2),
+	IN pIsActive BIT, IN pIdLocation INT, IN pOrder BIT, IN pQueryType BIT)
+BEGIN
+	#INFO OF THE PRODUCT
+	SELECT P.idProduct AS 'Product ID', productName AS 'Product Name', cost AS 'Product Cost', typeName AS 'Product Type', image AS 'Image', supplierName AS 'Supplier',
+		P.isActive AS 'Active', entryDate AS 'Entry Date', tier AS 'Tier', productDescr AS 'Product Description', C.clubName AS 'Club Name', ST_DISTANCE(L1.location, L2.location) AS 'Distance Between Location and Products',
+        amount AS 'Amount of Sales'
+	#REFERENCE OF ALL THE PRODUCTS WITH AN INVENTORY
+	FROM Product P INNER JOIN PopularProducts PP ON P.idProduct = PP.idProduct INNER JOIN ProductType PT ON P.idProductType = PT.idProductType
+    INNER JOIN Supplier S ON P.idSupplier = S.idSupplier INNER JOIN Inventory I ON I.idProduct = P.idProduct
+    INNER JOIN Club C ON I.idClub = C.idClub INNER JOIN Location L1 ON C.idLocation = L1.idLocation,
+    #REFERENCE OF A PARTICULAR LOCATION 
+    Location L2
+    #OPTIONAL PARAMETERES (ONLY pIdLocation NEEDS TO BE GIVED OR THE QUERY IS GOING TO BE EMPTY, NEEDS A REFERENCE LOCATION)
+    WHERE productName = IFNULL(pProductName, productName) AND cost = IFNULL(pCost, cost)
+		AND P.idProductType = IFNULL(pIdProductType, P.idProductType) AND P.isActive = IFNULL(pIsActive, P.isActive)
+        AND L2.idLocation = pIdLocation
+	#ORDER BY DEPENDING ON ASC, DESC AND BY DISTANCE OR POPULAR PRODUCTS
+	ORDER BY
+		(CASE WHEN pOrder = 1 AND pQueryType = 1 THEN ST_DISTANCE(L1.location, L2.location) END) ASC,
+        (CASE WHEN pOrder = 0 AND pQueryType = 1 THEN ST_DISTANCE(L1.location, L2.location) END) DESC,
+        (CASE WHEN pOrder = 1 AND pQueryType = 0 THEN amount END) ASC,
+        (CASE WHEN pOrder = 0 AND pQueryType = 0 THEN amount END) DESC
+    ;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE BillQuery (IN pIdOrderP INT)
+BEGIN
+	SELECT productName, amount, OL.cost, SUM(amount*OL.cost) AS 'Total Cost'
+	FROM OrderP OP INNER JOIN OrderLine OL ON OP.idOrderP = OL.idOrderP
+    INNER JOIN Product P ON P.idProduct = OL.idProduct
+    WHERE OP.idOrderP = pIdOrderP
+	GROUP BY productName
+UNION ALL
+SELECT NULL, NULL, NULL, SUM(amount*OL.cost)
+	FROM OrderP OP INNER JOIN OrderLine OL ON OP.idOrderP = OL.idOrderP
+    INNER JOIN Product P ON P.idProduct = OL.idProduct
+	WHERE OP.idOrderP = pIdOrderP;
+END //
+DELIMITER ;
+
+
 ##################################################################################################
 #CRUD CALLS
 ##################################################################################################
@@ -2750,6 +2797,8 @@ DELIMITER ;
 #PRODUCT TYPE
 #################################################
 CALL CProductType('Tabaco', @result);
+SELECT @result;
+CALL CProductType('Vodka', @result);
 SELECT @result;
 CALL RProductType(NULL, NULL, NULL);
 CALL UProductType(1, 'Tabaco', 1, @result);
@@ -2762,6 +2811,8 @@ SELECT * FROM ProductType;
 #SUPPLIER
 #################################################
 CALL CSupplier('Jackass', @result);
+SELECT @result;
+CALL CSupplier('Strong', @result);
 SELECT @result;
 CALL RSupplier(NULL, NULL, NULL);
 CALL USupplier(1, 'DonOmar', 1, @result);
@@ -2787,8 +2838,11 @@ SELECT * FROM Cash;
 
 #PRODUCT
 #################################################
-CALL CProduct("Whiskey", 2.62, 1, NULL,
-					1, 1, 1, "Is Insane", @result);
+CALL CProduct("Whiskey", 2.62, 2, NULL,
+					2, 1, 1, "Is Insane", @result);
+SELECT @result;
+CALL CProduct("Beer", 1.2, 2, NULL,
+					2, 1, 2, "Is incredible", @result);
 SELECT @result;
 CALL RProduct(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, NULL);
 CALL UProduct(1,"Vodka",NULL,NULL,NULL,NULL,NULL,1,NULL,NULL, NULL, @result);
@@ -2816,6 +2870,8 @@ SELECT * FROM Presentation;
 #################################################
 CALL CLocation(ST_GeomFromText('POINT(0 0)'), 1, @result);
 SELECT @result;
+CALL CLocation(ST_GeomFromText('POINT(-15 -3)'), 1, @result);
+SELECT @result;
 CALL CLocation(ST_GeomFromText('POINT(10 12)'), 0, @result);
 SELECT @result;
 CALL RLocation(NULL, NULL, NULL);
@@ -2830,6 +2886,8 @@ SELECT * FROM Location;
 #################################################
 CALL CClub("Guardians Club", 1, 2.5, 1, @result);
 SELECT @result;
+CALL CClub("Whiskeys Club", 2, 1.2, 1, @result);
+SELECT @result;
 CALL RClub(NULL,NULL,NULL,NULL,NULL, NULL);
 CALL UClub(1, "The Guardians Club", 2, NULL, NULL, 1, @result);
 SELECT @result;
@@ -2841,6 +2899,10 @@ SELECT * FROM Club;
 #INVENTORY
 #################################################
 CALL CInventory(1,1,20, @result);
+SELECT @result;
+CALL CInventory(1,2,30, @result);
+SELECT @result;
+CALL CInventory(2,2,30, @result);
 SELECT @result;
 CALL RInventory(NULL,NULL,NULL,NULL,NULL);
 CALL UInventory(1,NULL,NULL,30,1, @result);
@@ -2904,7 +2966,7 @@ SELECT * FROM Card;
 
 #CLIENTLOCATION
 #################################################
-CALL CClientLocation(1, 2, @result);
+CALL CClientLocation(1, 3, @result);
 SELECT @result;
 CALL RClientLocation(NULL, NULL, NULL);
 CALL UClientLocation(1, NULL, 2, @result);
@@ -2992,7 +3054,7 @@ SELECT * FROM Review;
 
 #POPULARPRODUCTS
 #################################################
-CALL CPopularProducts(1, @result);
+CALL CPopularProducts(2, @result);
 SELECT @result;
 CALL RPopularProducts(NULL, NULL, NULL);
 CALL UPopularProducts(1, NULL, 0, @result);
@@ -3017,7 +3079,7 @@ SELECT * FROM OrderP;
 #################################################
 CALL BuyProduct(1, 1, 2, @result);
 SELECT @result;
-CALL BuyProduct(1, 1, 6, @result);
+CALL BuyProduct(1, 2, 6, @result);
 SELECT @result;
 SELECT * FROM OrderLine;
 #################################################
@@ -3032,10 +3094,15 @@ CALL ReadLine(1);
 CALL CalculateDeliveryC(1, 1, 1);
 #################################################
 
+#PRODUCT QUERY
+#################################################
+CALL ProductQuery(NULL, NULL, NULL, NULL, 2, NULL, NULL);
+#################################################
 
-
-
-
+#BILL QUERY
+#################################################
+CALL BillQuery(1);
+#################################################
 
 
 ##TEMPLATE

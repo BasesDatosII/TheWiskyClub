@@ -20,9 +20,23 @@ app.get('/locations', (req, res) => {        //get requests to the root ("/") wi
     })
 });
 
+app.get('/Resource/:dir/:name', async function(req, res){
+   let resource = (req.params.dir).concat('/').concat(req.params.name);
+   res.sendFile(resource,{root: __dirname})
+});
 
-app.get('/Collection.html', (req, resp) =>{
+app.get('/Resource/:name', async function(req, res){
+    let resource = (req.params.name);
+    res.sendFile(resource,{root: __dirname})
+});
+
+
+app.get('/Collectionhtml', (req, resp) =>{
     resp.sendFile('Collection.html',{root: __dirname});
+});
+
+app.get('/Collectioncss', (req, resp) =>{
+    resp.sendFile('Collection.css',{root: __dirname});
 });
 
 app.listen(port, () => {            //server starts listening for any attempts from a client to connect at port: {port}

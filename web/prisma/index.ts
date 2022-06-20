@@ -4,8 +4,20 @@ const prisma = new PrismaClient()
 
 async function main() {
     // ... you will write your Prisma Client queries here
-    const result = await prisma.$queryRaw`SELECT * FROM Country`
+    let name = 'zoila'
+    let idDep = 1
+
+/*
+    let result = await prisma.$queryRaw`EXEC CDepartment @idUser = ${idDep}, @departmentname = 'todo un poco2'`
     console.log(result)
+
+    result = await prisma.$queryRaw`EXEC CJob ${name}, ${idDep}`
+    console.log(result)
+*/
+
+    let result = await prisma.$queryRaw`Select * from Department`
+    console.log(result)
+
 }
 
 main()

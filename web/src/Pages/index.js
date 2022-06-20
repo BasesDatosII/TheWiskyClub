@@ -19,8 +19,27 @@ app.get('/locations', (req, res) => {        //get requests to the root ("/") wi
         lng: -84.07931,
     })
 });
+/**
+ * 
+ * To log in code
+ * 
+ */
 
+app.get('/Log-In', (req, res) => {
+    res.sendFile('Log-In.html', {root: __dirname});
+});
 
+app.get('/Log-Incss', (req, res) =>{
+    res.sendFile('Log-In.css', {root: __dirname});
+});
+app.get('/images/1.png', (req, res) =>{
+    res.sendFile('/images/1.png', {root: __dirname});
+});
+/**
+ * 
+ * To collection cde
+ * 
+ */
 app.get('/Collection.html', (req, resp) =>{
     resp.sendFile('Collection.html',{root: __dirname});
 });

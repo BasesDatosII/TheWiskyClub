@@ -1,7 +1,7 @@
 
 
 //version 1.0 before merge the pages with api
-
+/*
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import 'bootstrap/dist/css/bootstrap.css';
@@ -19,3 +19,4 @@ root.render(<React.StrictMode>
         </BrowserRouter>
     </React.StrictMode>);
 
+*/

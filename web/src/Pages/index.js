@@ -16,8 +16,13 @@ app.get('/map.html', (req, res) => {        //get requests to the root ("/") wil
 app.get('/locations', (req, res) => {        //get requests to the root ("/") will route here
     res.json({
         lat: 9.97669,
-        long: -84.07931,
+        lng: -84.07931,
     })
+});
+
+
+app.get('/Collection.html', (req, resp) =>{
+    resp.sendFile('Collection.html',{root: __dirname});
 });
 
 app.listen(port, () => {            //server starts listening for any attempts from a client to connect at port: {port}

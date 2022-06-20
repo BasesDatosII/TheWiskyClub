@@ -54,7 +54,7 @@ export default function MapAPI(){
         ]);
     }, []);
 
-    const mapRef = React.useRef();
+    const mapRef =  React.useRef();
     const onMapLoad = React.useCallback((map)=>{
         mapRef.current = map;
     }, []);
@@ -100,10 +100,9 @@ export default function MapAPI(){
                 onCloseClick ={() => setSelected(null)}
             >
                 <div>
-                    <h2>Information</h2>
+                    <h2>Information de persona * </h2>
                 </div>
             </InfoWindow>) : null}
         </GoogleMap>
-
     </div>);
 }

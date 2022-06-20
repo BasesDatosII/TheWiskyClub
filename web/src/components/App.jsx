@@ -7,7 +7,11 @@ import MapAPI from "./MapAPI";
 
 
 export function App(){
-    return (<div>
+    return (
+    <React.Fragment>
+
       <MapAPI></MapAPI>
-    </div>);
+    </React.Fragment>
+
+    );
 }

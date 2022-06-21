@@ -42,19 +42,3 @@ app.listen(port, () => {            //server starts listening for any attempts f
     console.log(`Now listening on port ${port}`);
 });
 
-
-
-});
-app.get('/MapApi.jsx', (req, res) => {
-    res.sendFile('components/MapApi.jsx')
-/*document.getElementById("submitButton").addEventListener("click", function(){
-    console.log(`Selecten item!`);
-
-    var json = JSON.stringify({
-        id: parseInt(this.typeId),
-        subject: this.datatype,
-        points: parseInt(this.points),
-        user: "H. Pauwelyn"
-    });
-    console.log(`Selecten item!` + json);
-});*/

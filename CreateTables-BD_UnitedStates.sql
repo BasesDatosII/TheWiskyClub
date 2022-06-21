@@ -38,13 +38,6 @@ CREATE TABLE Membership
     isActive BIT NOT NULL #1 = ACTIVE, 0 = NON ACTIVE
 );
 
-CREATE TABLE Presentation
-(
-	idPresentation INT AUTO_INCREMENT, PRIMARY KEY (idPresentation),
-    amountBottles INT NOT NULL,
-    sizeBottle INT NOT NULL
-);
-
 CREATE TABLE Supplier
 (
 	idSupplier INT AUTO_INCREMENT, PRIMARY KEY (idSupplier),
@@ -71,9 +64,6 @@ CREATE TABLE Product
     idSupplier INT NOT NULL,
     CONSTRAINT fk_ProductSupplier FOREIGN KEY(idSupplier)
     REFERENCES Supplier(idSupplier),
-    idPresentation INT NOT NULL,
-    CONSTRAINT fk_ProductPresentation FOREIGN KEY(idPresentation)
-    REFERENCES Presentation(idPresentation),
     idCash INT NOT NULL,
     CONSTRAINT fk_ProductCash FOREIGN KEY(idCash)
     REFERENCES Cash(idCash),
@@ -83,13 +73,26 @@ CREATE TABLE Product
     productDescr VARCHAR(200)
 );
 
+CREATE TABLE Presentation
+(
+	idPresentation INT AUTO_INCREMENT, PRIMARY KEY (idPresentation),
+	idProduct INT NOT NULL,
+    CONSTRAINT fk_PresentationProduct FOREIGN KEY(idProduct)
+    REFERENCES Product(idProduct),
+    amountBottles INT NOT NULL,
+    sizeBottle INT NOT NULL
+);
+
 CREATE TABLE PopularProducts
 (
 	idPopularProducts INT AUTO_INCREMENT, PRIMARY KEY (idPopularProducts),
     idProduct INT NOT NULL,
     CONSTRAINT fk_PopularProductsProduct FOREIGN KEY(idProduct)
     REFERENCES Product(idProduct),
-    amount INT NOT NULL DEFAULT 0
+    amount INT NOT NULL DEFAULT 0,
+    idClub INT NOT NULL,
+    CONSTRAINT fk_PopularProductsClub FOREIGN KEY(idClub)
+    REFERENCES Club(idClub)
 );
 
 CREATE TABLE Inventory

@@ -1,0 +1,271 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "generated/UnitedStatesDB"
+}
+
+datasource mysql_UnitedStates_db {
+  provider = "mysql"
+  url      = "mysql://root:Dexter@localhost:3306/BD_UnitedStates"
+}
+
+model card {
+  idCard         Int        @id @default(autoincrement())
+  idInfoPeople   Int
+  cardNumber     String     @mysql_UnitedStates_db.VarChar(18)
+  expirationDate DateTime   @mysql_UnitedStates_db.Date
+  cvv            Int
+  infopeople     infopeople @relation(fields: [idInfoPeople], references: [idInfoPeople], onDelete: NoAction, onUpdate: NoAction, map: "fk_CardInfoPeople")
+
+  @@index([idInfoPeople], map: "fk_CardInfoPeople")
+}
+
+model cash {
+  idCash   Int       @id @default(autoincrement())
+  cashType String    @mysql_UnitedStates_db.VarChar(20)
+  club     club[]
+  product  product[]
+}
+
+model clientlocation {
+  idClientLocation Int          @id @default(autoincrement())
+  idClientPeople   Int
+  idLocation       Int
+  clientpeople     clientpeople @relation(fields: [idClientPeople], references: [idClientPeople], onDelete: NoAction, onUpdate: NoAction, map: "fk_ClientLocationClientPeople")
+  location         location     @relation(fields: [idLocation], references: [idLocation], onDelete: NoAction, onUpdate: NoAction, map: "fk_ClientLocationLocation")
+
+  @@index([idClientPeople], map: "fk_ClientLocationClientPeople")
+  @@index([idLocation], map: "fk_ClientLocationLocation")
+}
+
+model clientmembership {
+  idClientMembership Int          @id @default(autoincrement())
+  idMembership       Int
+  idClientPeople     Int
+  clientpeople       clientpeople @relation(fields: [idClientPeople], references: [idClientPeople], onDelete: NoAction, onUpdate: NoAction, map: "fk_ClientMembershipClient")
+  membership         membership   @relation(fields: [idMembership], references: [idMembership], onDelete: NoAction, onUpdate: NoAction, map: "fk_ClientMembershipMembership")
+
+  @@index([idClientPeople], map: "fk_ClientMembershipClient")
+  @@index([idMembership], map: "fk_ClientMembershipMembership")
+}
+
+model clientpeople {
+  idClientPeople   Int                @id @default(autoincrement())
+  idClientUser     Int
+  idInfoPeople     Int
+  salesCounter     Int                @default(0)
+  isActive         Boolean            @mysql_UnitedStates_db.Bit(1)
+  clientuser       clientuser         @relation(fields: [idClientUser], references: [idClientUser], onDelete: NoAction, onUpdate: NoAction, map: "fk_ClientPeopleClientUser")
+  infopeople       infopeople         @relation(fields: [idInfoPeople], references: [idInfoPeople], onDelete: NoAction, onUpdate: NoAction, map: "fk_ClientInfoPeople")
+  clientlocation   clientlocation[]
+  clientmembership clientmembership[]
+  orderp           orderp[]
+
+  @@index([idInfoPeople], map: "fk_ClientInfoPeople")
+  @@index([idClientUser], map: "fk_ClientPeopleClientUser")
+}
+
+model clientuser {
+  idClientUser Int            @id @default(autoincrement())
+  userPassword Bytes          @mysql_UnitedStates_db.Blob
+  isActive     Boolean        @mysql_UnitedStates_db.Bit(1)
+  clientpeople clientpeople[]
+  review       review[]
+  workerreview workerreview[]
+}
+
+model club {
+  idClub           Int               @id @default(autoincrement())
+  clubName         String            @mysql_UnitedStates_db.VarChar(20)
+  idLocation       Int
+  deliveryCostProp Float             @mysql_UnitedStates_db.Float
+  idCash           Int
+  isActive         Boolean           @mysql_UnitedStates_db.Bit(1)
+  cash             cash              @relation(fields: [idCash], references: [idCash], onDelete: NoAction, onUpdate: NoAction, map: "fk_ClubCash")
+  location         location          @relation(fields: [idLocation], references: [idLocation], onDelete: NoAction, onUpdate: NoAction, map: "fk_ClubLocation")
+  inventory        inventory[]
+  orderp           orderp[]
+  popularproducts  popularproducts[]
+
+  @@index([idCash], map: "fk_ClubCash")
+  @@index([idLocation], map: "fk_ClubLocation")
+}
+
+model complaint {
+  idComplaint     Int          @id @default(autoincrement())
+  idWorkerReview  Int
+  compDescription String       @mysql_UnitedStates_db.VarChar(200)
+  solved          Boolean      @mysql_UnitedStates_db.Bit(1)
+  workerreview    workerreview @relation(fields: [idWorkerReview], references: [idWorkerReview], onDelete: NoAction, onUpdate: NoAction, map: "fk_ComplaintWorkerReview")
+
+  @@index([idWorkerReview], map: "fk_ComplaintWorkerReview")
+}
+
+model infopeople {
+  idInfoPeople Int            @id @default(autoincrement())
+  peopleName   String         @mysql_UnitedStates_db.VarChar(20)
+  surname      String         @mysql_UnitedStates_db.VarChar(30)
+  email        String         @mysql_UnitedStates_db.VarChar(50)
+  phoneNumber  Int
+  birthDate    DateTime       @mysql_UnitedStates_db.Date
+  isActive     Boolean        @mysql_UnitedStates_db.Bit(1)
+  card         card[]
+  clientpeople clientpeople[]
+}
+
+model inventory {
+  idInventory Int     @id @default(autoincrement())
+  idClub      Int
+  idProduct   Int
+  stock       Int     @default(0)
+  isActive    Boolean @mysql_UnitedStates_db.Bit(1)
+  club        club    @relation(fields: [idClub], references: [idClub], onDelete: NoAction, onUpdate: NoAction, map: "fk_InventoryClub")
+  product     product @relation(fields: [idProduct], references: [idProduct], onDelete: NoAction, onUpdate: NoAction, map: "fk_InventoryProduct")
+
+  @@index([idClub], map: "fk_InventoryClub")
+  @@index([idProduct], map: "fk_InventoryProduct")
+}
+
+model location {
+  idLocation     Int                     @id @default(autoincrement())
+  location       Unsupported("geometry")
+  typeLocation   Boolean?                @mysql_UnitedStates_db.Bit(1)
+  isActive       Boolean                 @mysql_UnitedStates_db.Bit(1)
+  clientlocation clientlocation[]
+  club           club[]
+}
+
+model membership {
+  idMembership     Int                @id @default(autoincrement())
+  nameMembership   String             @mysql_UnitedStates_db.VarChar(30)
+  cost             Decimal            @mysql_UnitedStates_db.Decimal(15, 2)
+  productDiscount  Float              @mysql_UnitedStates_db.Float
+  deliveryDiscount Float              @mysql_UnitedStates_db.Float
+  isActive         Boolean            @mysql_UnitedStates_db.Bit(1)
+  clientmembership clientmembership[]
+}
+
+model orderline {
+  idOrderLine Int     @id @default(autoincrement())
+  idOrderP    Int
+  idProduct   Int
+  cost        Decimal @mysql_UnitedStates_db.Decimal(15, 2)
+  amount      Int
+  orderp      orderp  @relation(fields: [idOrderP], references: [idOrderP], onDelete: NoAction, onUpdate: NoAction, map: "fk_OrderLineOrderP")
+  product     product @relation(fields: [idProduct], references: [idProduct], onDelete: NoAction, onUpdate: NoAction, map: "fk_OrderLineProduct")
+
+  @@index([idOrderP], map: "fk_OrderLineOrderP")
+  @@index([idProduct], map: "fk_OrderLineProduct")
+}
+
+model orderp {
+  idOrderP       Int          @id @default(autoincrement())
+  idClientPeople Int
+  orderDate      DateTime     @mysql_UnitedStates_db.Date
+  idClub         Int
+  idEmployer     Int
+  idMailer       Int
+  deliveryCost   Decimal      @mysql_UnitedStates_db.Decimal(15, 2)
+  clientpeople   clientpeople @relation(fields: [idClientPeople], references: [idClientPeople], onDelete: NoAction, onUpdate: NoAction, map: "fk_OrderPClient")
+  club           club         @relation(fields: [idClub], references: [idClub], onDelete: NoAction, onUpdate: NoAction, map: "fk_OrderPClub")
+  orderline      orderline[]
+
+  @@index([idClientPeople], map: "fk_OrderPClient")
+  @@index([idClub], map: "fk_OrderPClub")
+}
+
+model popularproducts {
+  idPopularProducts Int     @id @default(autoincrement())
+  idProduct         Int
+  amount            Int     @default(0)
+  idClub            Int
+  club              club    @relation(fields: [idClub], references: [idClub], onDelete: NoAction, onUpdate: NoAction, map: "fk_PopularProductsClub")
+  product           product @relation(fields: [idProduct], references: [idProduct], onDelete: NoAction, onUpdate: NoAction, map: "fk_PopularProductsProduct")
+
+  @@index([idClub], map: "fk_PopularProductsClub")
+  @@index([idProduct], map: "fk_PopularProductsProduct")
+}
+
+model presentation {
+  idPresentation Int     @id @default(autoincrement())
+  idProduct      Int
+  amountBottles  Int
+  sizeBottle     Int
+  product        product @relation(fields: [idProduct], references: [idProduct], onDelete: NoAction, onUpdate: NoAction, map: "fk_PresentationProduct")
+
+  @@index([idProduct], map: "fk_PresentationProduct")
+}
+
+model product {
+  idProduct       Int               @id @default(autoincrement())
+  productName     String?           @mysql_UnitedStates_db.VarChar(20)
+  cost            Decimal           @mysql_UnitedStates_db.Decimal(15, 2)
+  idProductType   Int
+  image           Bytes?            @mysql_UnitedStates_db.Blob
+  idSupplier      Int
+  idCash          Int
+  isActive        Boolean           @mysql_UnitedStates_db.Bit(1)
+  entryDate       DateTime          @mysql_UnitedStates_db.Date
+  tier            Int               @default(1)
+  productDescr    String?           @mysql_UnitedStates_db.VarChar(200)
+  cash            cash              @relation(fields: [idCash], references: [idCash], onDelete: NoAction, onUpdate: NoAction, map: "fk_ProductCash")
+  producttype     producttype       @relation(fields: [idProductType], references: [idProductType], onDelete: NoAction, onUpdate: NoAction, map: "fk_ProductProductType")
+  supplier        supplier          @relation(fields: [idSupplier], references: [idSupplier], onDelete: NoAction, onUpdate: NoAction, map: "fk_ProductSupplier")
+  inventory       inventory[]
+  orderline       orderline[]
+  popularproducts popularproducts[]
+  presentation    presentation[]
+  review          review[]
+
+  @@index([idCash], map: "fk_ProductCash")
+  @@index([idProductType], map: "fk_ProductProductType")
+  @@index([idSupplier], map: "fk_ProductSupplier")
+}
+
+model producttype {
+  idProductType Int       @id @default(autoincrement())
+  typeName      String    @mysql_UnitedStates_db.VarChar(20)
+  isActive      Boolean   @mysql_UnitedStates_db.Bit(1)
+  product       product[]
+}
+
+model qualification {
+  idQualification Int          @id @default(autoincrement())
+  idWorkerReview  Int
+  qualDescription String       @mysql_UnitedStates_db.VarChar(200)
+  workerreview    workerreview @relation(fields: [idWorkerReview], references: [idWorkerReview], onDelete: NoAction, onUpdate: NoAction, map: "fk_QualificationWorkerReview")
+
+  @@index([idWorkerReview], map: "fk_QualificationWorkerReview")
+}
+
+model review {
+  idReview       Int        @id @default(autoincrement())
+  idProduct      Int
+  score          Int
+  revDescription String     @mysql_UnitedStates_db.VarChar(200)
+  idClientUser   Int
+  revDate        DateTime   @mysql_UnitedStates_db.Date
+  clientuser     clientuser @relation(fields: [idClientUser], references: [idClientUser], onDelete: NoAction, onUpdate: NoAction, map: "fk_ReviewClientUser")
+  product        product    @relation(fields: [idProduct], references: [idProduct], onDelete: NoAction, onUpdate: NoAction, map: "fk_ReviewProduct")
+
+  @@index([idClientUser], map: "fk_ReviewClientUser")
+  @@index([idProduct], map: "fk_ReviewProduct")
+}
+
+model supplier {
+  idSupplier   Int       @id @default(autoincrement())
+  supplierName String    @mysql_UnitedStates_db.VarChar(20)
+  isActive     Boolean   @mysql_UnitedStates_db.Bit(1)
+  product      product[]
+}
+
+model workerreview {
+  idWorkerReview Int             @id @default(autoincrement())
+  idClientUser   Int
+  idWorker       Int
+  dateWR         DateTime        @mysql_UnitedStates_db.Date
+  clientuser     clientuser      @relation(fields: [idClientUser], references: [idClientUser], onDelete: NoAction, onUpdate: NoAction, map: "fk_WorkerReviewClientUser")
+  complaint      complaint[]
+  qualification  qualification[]
+
+  @@index([idClientUser], map: "fk_WorkerReviewClientUser")
+}

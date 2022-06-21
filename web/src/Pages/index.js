@@ -39,6 +39,6 @@ app.get('/Resource/:name', async function(req, res){
 });
 
 app.listen(port, () => {            //server starts listening for any attempts from a client to connect at port: {port}
-    console.log(`Now listening on port ${port}`);
+    console.log(`Starrting development software-> Now listening port ${port}`);
 });
 

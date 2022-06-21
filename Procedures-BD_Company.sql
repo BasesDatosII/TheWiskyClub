@@ -3,7 +3,7 @@
 |									Validation procedures								   |							
 ------------------------------------------------------------------------------------------*/
 /*Procedures for valitation InfoEmployee*/
-ALTER PROCEDURE isidEmployeeExist  @vinfoEmployee INT --RETURNS 1 for existing employee or 0 in otherwise  
+CREATE PROCEDURE isidEmployeeExist  @vinfoEmployee INT --RETURNS 1 for existing employee or 0 in otherwise  
 AS
 BEGIN
 	IF((SELECT COUNT(idInfoEmployee) FROM InfoEmployee WHERE @vinfoEmployee=idInfoEmployee) >=1)
@@ -32,7 +32,7 @@ BEGIN
 		END
 END
 GO 
-ALTER PROCEDURE VCountry @vidCountry INT
+CREATE PROCEDURE VCountry @vidCountry INT
 AS
 BEGIN
 	IF((SELECT COUNT(idCountry) FROM Country WHERE @vidCountry = idCountry)>=1) --exist
@@ -45,7 +45,7 @@ BEGIN
 		END
 END
 GO
-ALTER PROCEDURE isEmailCorrect @vEmail varchar(50) --returns 1 for a valid email or 0 for a invalid email
+CREATE PROCEDURE isEmailCorrect @vEmail varchar(50) --returns 1 for a valid email or 0 for a invalid email
 AS
 DECLARE @isEmail BIT = 0
 BEGIN
@@ -64,7 +64,8 @@ BEGIN
 	RETURN(@isEmail)
 END
 GO
-CREATE PROCEDURE isDepartmentExist @vidD INT NOT NULL
+--CREATE PROCEDURE isDepartmentExist @vidD INT NOT NULL
+CREATE PROCEDURE isDepartmentExist @vidD INT
 AS
 BEGIN
 	IF((SELECT count(idDepartment) FROM Department WHERE @vidD = idDepartment)>=1)
@@ -135,7 +136,7 @@ GO
 	/*
 	Try to convert varchar to varbinary when the password is secure
 	*/
-alter PROCEDURE ispasswordCorrectFormat @vpassword VARCHAR(8000)
+CREATE PROCEDURE ispasswordCorrectFormat @vpassword VARCHAR(8000)
 AS
 BEGIN 
 	IF(len(@vpassword)>=8)--more than 8 is secure
@@ -334,18 +335,21 @@ END
 *============================================================================*/
 go
 --we need to convert this to ONLY FOR ADMIN USERS
-CREATE PROCEDURE CJob @pjobName VARCHAR(20) NOT NULL, @pidDepartment INT NOT NULL
+CREATE PROCEDURE CJob @pjobName VARCHAR(20), @pidDepartment INT
 AS
 DECLARE @respidDepartmetExist BIT
 BEGIN 
-	EXEC @respidDepartmetExist = isDepartmentExist @vidD = @pidDepartment
-	IF(@respidDepartmetExist = 0)
+	IF (@pjobName IS NOT NULL AND @pidDepartment IS NOT NULL)
 		BEGIN
-			INSERT INTO Job (jobName, idDepartment) VALUES(@pjobName, @pidDepartment)
-			PRINT N'Sucessfully insert into job'
+			EXEC @respidDepartmetExist = isDepartmentExist @vidD = @pidDepartment
+			IF(@respidDepartmetExist = 1)
+				BEGIN
+					INSERT INTO Job (jobName, idDepartment) VALUES(@pjobName, @pidDepartment)
+					PRINT N'Sucessfully insert into job'
+				END
+			ELSE
+				PRINT N'Id deparmet already exist'
 		END
-	ELSE
-		PRINT N'Id deparmet already exist'
 END
 GO
 CREATE PROCEDURE UJob @pidJob INT NOT NULL, @pJobName INT, @pidDeparment INT
@@ -386,7 +390,7 @@ GO
 					 CRUD Employee user
 *============================================================================*/
 --create
-CREATE PROCEDURE CEmployeeUser @pidEmployee INT NOT NULL, @ppassword VARBINARY(8000) NOT NULL
+CREATE PROCEDURE CEmployeeUser @pidEmployee INT, @ppassword VARBINARY(8000)
 AS
 DECLARE @respUserExist BIT
 BEGIN
@@ -452,10 +456,12 @@ GO
 /*============================================================================
 					 CRUD CASH CLUB
 *============================================================================*/
-CREATE PROCEDURE CcashClub @pcashType VARCHAR(20) NOT NULL, @pidClub INT NOT NULL
+--CREATE PROCEDURE CcashClub @pcashType VARCHAR(20) NOT NULL, @pidClub INT NOT NULL
+CREATE PROCEDURE CcashClub @pcashType VARCHAR(20), @pidClub INT
 AS
 BEGIN
-	INSERT INTO CashClub (cashType, idClub) VALUES (@pcashType, @pidClub)
+	IF (@pcashType IS NOT NULL AND @pidClub IS NOT NULL)
+		INSERT INTO CashClub (cashType, idClub) VALUES (@pcashType, @pidClub)
 END
 GO
 CREATE PROCEDURE RCashClub @pidCashClub INT, @pcashType VARCHAR(20), @pidClub INT
@@ -487,11 +493,12 @@ GO
 					 CRUD Employee
 *============================================================================*/
 -- create employee
-CREATE PROCEDURE CEmployee @pidInfoEmployee INT NOT NULL,
-							@psalary money  NOT NULL, 
-							@pidJob INT NOT NULL, 	
-							@pidEmployeeUser INT NOT NULL, 
-							@pidCashClub INT NOT NULL 
+CREATE PROCEDURE CEmployee @pidEmployee INT,
+							@pidInfoEmployee INT,
+							@psalary money, 
+							@pidJob INT, 	
+							@pidEmployeeUser INT, 
+							@pidCashClub INT
 AS
 DECLARE @respidInfoEmployee BIT
 DECLARE @respidJob BIT
@@ -512,8 +519,8 @@ BEGIN
 					BEGIN
 					IF(@respidJob = 1)
 						BEGIN
-							INSERT INTO Employee (idInfoEmployee, salary, idJob,idEmployeeUser, idCashClub) 
-							VALUES (@pidInfoEmployee, @psalary, @pidJob, @pidEmployeeUser,  @pidCashClub)
+							INSERT INTO Employee (idEmployee, idInfoEmployee, salary, idJob,idEmployeeUser, idCashClub) 
+							VALUES (@pidEmployee, @pidInfoEmployee, @psalary, @pidJob, @pidEmployeeUser,  @pidCashClub)
 							SET @result = 'insert sucessfully'
 						END
 					ELSE
@@ -633,4 +640,139 @@ BEGIN
 						AND calification = ISNULL(@pcalification,calification)
 END
 go
+
+/*============================================================================
+					 CRUD Employee
+*============================================================================*/
+CREATE PROCEDURE CCountry @countryName VARCHAR(20)
+AS
+BEGIN
+	DECLARE @result NVARCHAR(MAX)
+	IF (@countryName IS NOT NULL)
+		BEGIN
+			IF ((SELECT COUNT(idCountry) FROM Country WHERE countryName = @countryName) = 0)
+				BEGIN
+					INSERT INTO Country (countryName) VALUES (@countryName)
+				END
+			ELSE
+				PRINT N'Country name already exists'
+		END
+	ELSE
+		BEGIN
+			SET @result = 'Any of the parameters can´t be null'
+			SELECT @result
+		END
+END
+GO
+
+CREATE PROCEDURE RCountry @idCountry INT = NULL, @countryName VARCHAR(20) = NULL
+AS
+BEGIN
+	SELECT idCountry AS 'Country ID', countryName AS 'Country Name'
+	FROM Country WHERE idCountry = ISNULL(@idCountry, idCountry) AND
+	countryName = ISNULL(@countryName, countryName)
+END
+GO
+
+CREATE PROCEDURE UCountry @idCountry INT, @countryName VARCHAR(20)
+AS
+BEGIN
+	DECLARE @result NVARCHAR(MAX)
+	IF (@idCountry IS NOT NULL AND (SELECT COUNT(idCountry) FROM Country WHERE idCountry = @idCountry) > 0)
+		BEGIN
+			IF (@countryName IS NOT NULL)
+				BEGIN
+					IF ((SELECT COUNT(idCountry) FROM Country WHERE countryName = @countryName) = 0)
+						BEGIN
+							UPDATE Country SET countryName = @countryName WHERE idCountry = @idCountry
+							SET @result = CONCAT(@result, 'Country name has been modified' + CHAR(13))
+						END
+					ELSE
+						BEGIN
+							SET @result = CONCAT(@result, 'Country name already exists' + CHAR(13))
+						END
+				END
+			SET @result = CONCAT(@result, 'hanges made succesfully' + CHAR(13))
+			SELECT @result
+		END
+	ELSE
+		BEGIN
+			SET @result = 'Country ID specified doesn´t exists'
+			SELECT @result
+		END
+END
+GO
+
+CREATE PROCEDURE DCountry @idCountry VARCHAR(20)
+AS
+BEGIN
+	DECLARE @result NVARCHAR(MAX)
+	IF ((SELECT COUNT(idCountry) FROM Country WHERE idCountry = @idCountry) > 0)
+		BEGIN
+			DELETE Country WHERE idCountry = @idCountry
+			SET @result = 'Country deleted'
+			SELECT @result
+		END
+	ELSE
+		BEGIN
+			SET @result = 'Country ID specified doesn´t exists'
+			SELECT @result
+		END
+END
+GO
+
+/*============================================================================
+					 Report
+*============================================================================*/
+
+CREATE PROCEDURE Payroll @idDepartment INT = NULL, @salary INT = NULL, @calification FLOAT = NULL
+AS
+BEGIN
+	SELECT idEmployee AS 'Employee ID', peopleName AS ' Employee Name', surname AS 'Employee Surname',
+	countryName AS 'Country Name', salary AS 'Salary', jobName AS 'Job Name',
+	departmentName AS 'Department Name', cashType as 'CashType', idClub AS 'Club ID', calification AS 'Calification'
+	FROM Employee E INNER JOIN InfoEmployee IE ON E.idInfoEmployee = IE.idInfoEmployee
+	INNER JOIN Country C ON IE.idCountry = C.idCountry
+	INNER JOIN Job J ON E.idJob = J.idJob INNER JOIN Department D ON J.idDepartment = D.idDepartment
+	INNER JOIN CashClub CC ON  E.idCashClub = CC.idCashClub
+	WHERE D.idDepartment = ISNULL(@idDepartment, D.idDepartment) AND salary = ISNULL(@salary, salary)
+	AND calification = ISNULL(@calification, calification)
+END
+GO
+
+
+/*============================================================================
+					 CRUD CALLS
+*============================================================================*/
+
+EXEC CcashClub @pcashType = 'Dollar', @pidClub = 1
+EXEC CcashClub @pcashType = 'Pound', @pidClub = 2
+EXEC CcashClub @pcashType = 'Euro', @pidClub = 3
+EXEC RCashClub 
+EXEC UcashClub
+
+EXEC CDepartment @idUser = NULL, @departmentname = 'Contability'
+
+EXEC CJob @pjobName = 'Accountant', @pidDepartment = 1
+
+EXEC CCountry @countryName = 'Costa Rica'
+
+EXEC CInfoEmployee @pidInfoEmployee = 1, @ppeopleName = 'Esteban', @psurname = 'Leiva', @pemail = 'esteban@gmail.com',
+@pphoneNumber = 80808293, @pbirthdate = '2002-04-20', @pemployeeAddress = 'San José, Costa Rica', @pidCountry = 1
+
+--EXEC CEmployeeUser @pIdEmployee = 1, @ppassword = CONVERT(VARBINARY(8000),ENCRYPTBYPASSPHRASE('password','Password')
+--EXEC CEmployee @pidEmployee = 1, @pidInfoEmployee = 1, @psalary = 500000, @pidJob = 1, @pidEmployeeUser = 1, @pidCashClub = 1
+INSERT INTO EmployeeUser (idEmployeeUser, pasword, isActive) VALUES (1, CONVERT(VARBINARY(8000),ENCRYPTBYPASSPHRASE('password','Password'), 1), 1)
+INSERT INTO Employee (idEmployee, idInfoEmployee, isActive, salary, idJob, idEmployeeUser, idCashClub, calification) VALUES (1, 1, 1, 500000, 1, 1, 1, 4.6)
+
+EXEC Payroll
+
+
+SELECT * FROM CashClub
+SELECT * FROM Department
+EXEC RCountry
+SELECT * FROM Job
+SELECT * FROM InfoEmployee
+SELECT * FROM EmployeeUser
+SELECT * FROM Employee
 

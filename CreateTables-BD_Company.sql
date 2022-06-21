@@ -1,6 +1,6 @@
 CREATE TABLE Country
 (
-	idCountry INT PRIMARY KEY,
+	idCountry INT PRIMARY KEY IDENTITY,
 	countryName VARCHAR(20) NOT NULL
 )
 GO

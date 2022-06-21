@@ -1,8 +1,8 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from './generated/Company'
 
 const prisma = new PrismaClient()
 
-async function main() {
+async function func() {
     // ... you will write your Prisma Client queries here
     let name = 'zoila'
     let idDep = 1
@@ -15,12 +15,12 @@ async function main() {
     console.log(result)
 */
 
-    let result = await prisma.$queryRaw`Select * from Department`
+    let result = await prisma.$queryRaw`Select * from Country`
     console.log(result)
 
 }
 
-main()
+func()
     .catch((e) => {
         throw e
     })

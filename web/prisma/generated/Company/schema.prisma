@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "generated/Company"
+}
+
+datasource sqlServer_db {
+  provider = "sqlserver"
+  url      = "sqlserver://CHESPAVIL\\MSSQLSERVER;initialCatalog=sample;integratedSecurity=true;encrypt=true;trustServerCertificate=true;database=theWhiskeyClub;"
+}
+
+model Country {
+  idCountry    Int            @id(map: "PK__Country__85364809782D5099")
+  countryName  String         @sqlServer_db.VarChar(20)
+  InfoEmployee InfoEmployee[]
+}
+
+model CashClub {
+  idCashClub Int        @id(map: "PK__CashClub__B6FEE6DA7F9C6BEB") @default(autoincrement())
+  cashType   String     @sqlServer_db.VarChar(20)
+  idClub     Int
+  Employee   Employee[]
+}
+
+model Department {
+  idDepartment   Int    @id(map: "PK__Departme__FE2F9795B01CF623") @default(autoincrement())
+  departmentName String @sqlServer_db.VarChar(30)
+  Job            Job[]
+}
+
+model Employee {
+  idEmployee     Int          @id(map: "PK__Employee__227F26A58957C912")
+  idInfoEmployee Int
+  isActive       Boolean      @default(true, map: "DF__Employee__isActi__33D4B598")
+  salary         Float        @sqlServer_db.Money
+  idJob          Int?
+  idEmployeeUser Int
+  idCashClub     Int
+  calification   Float        @default(0, map: "DF__Employee__califi__37A5467C")
+  CashClub       CashClub     @relation(fields: [idCashClub], references: [idCashClub], onUpdate: NoAction, map: "fk_EmployeeCashClub")
+  EmployeeUser   EmployeeUser @relation(fields: [idEmployeeUser], references: [idEmployeeUser], onUpdate: NoAction, map: "fk_EmployeeEmployeeUser")
+  InfoEmployee   InfoEmployee @relation(fields: [idInfoEmployee], references: [idInfoEmployee], onUpdate: NoAction, map: "fk_EmployeeInfoEmployee")
+  Job            Job?         @relation(fields: [idJob], references: [idJob], onDelete: NoAction, onUpdate: NoAction, map: "fk_EmployeeJob")
+}
+
+model EmployeeUser {
+  idEmployeeUser Int        @id(map: "PK__Employee__9D8DDE99BC88F1B6")
+  pasword        Bytes      @sqlServer_db.VarBinary(8000)
+  isActive       Boolean?   @default(true, map: "DF__EmployeeU__isAct__300424B4")
+  Employee       Employee[]
+}
+
+model InfoEmployee {
+  idInfoEmployee  Int        @id(map: "PK__InfoEmpl__64911B6D290C8DAE")
+  peopleName      String     @sqlServer_db.VarChar(20)
+  surname         String     @sqlServer_db.VarChar(30)
+  email           String     @sqlServer_db.VarChar(50)
+  phoneNumber     Int
+  birthDate       DateTime   @sqlServer_db.Date
+  employeeAddress String     @sqlServer_db.VarChar(100)
+  idCountry       Int
+  Country         Country    @relation(fields: [idCountry], references: [idCountry], onUpdate: NoAction, map: "fk_InfoEmployeeCountry")
+  Employee        Employee[]
+}
+
+model Job {
+  idJob        Int        @id(map: "PK__Job__3EE9C73FD8C4AF7A") @default(autoincrement())
+  jobName      String     @sqlServer_db.VarChar(20)
+  idDepartment Int
+  Department   Department @relation(fields: [idDepartment], references: [idDepartment], onUpdate: NoAction, map: "fk_JobDepartment")
+  Employee     Employee[]
+}

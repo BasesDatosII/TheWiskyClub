@@ -158,7 +158,7 @@ BEGIN
 		SET result = "The Supplier ID can't be NULL or the ID specified doesn´t exists";
 	END IF;
 END //
-DELIMITER 
+DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE DSupplier (IN pIdSupplier INT, OUT result VARCHAR(16383))

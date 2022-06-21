@@ -3,7 +3,7 @@
 |									Validation procedures								   |							
 ------------------------------------------------------------------------------------------*/
 /*Procedures for valitation InfoEmployee*/
-ALTER PROCEDURE isidEmployeeExist  @vinfoEmployee INT --RETURNS 1 for existing employee or 0 in otherwise  
+CREATE PROCEDURE isidEmployeeExist  @vinfoEmployee INT --RETURNS 1 for existing employee or 0 in otherwise
 AS
 BEGIN
 	IF((SELECT COUNT(idInfoEmployee) FROM InfoEmployee WHERE @vinfoEmployee=idInfoEmployee) >=1)
@@ -32,7 +32,7 @@ BEGIN
 		END
 END
 GO 
-ALTER PROCEDURE VCountry @vidCountry INT
+CREATE PROCEDURE VCountry @vidCountry INT
 AS
 BEGIN
 	IF((SELECT COUNT(idCountry) FROM Country WHERE @vidCountry = idCountry)>=1) --exist
@@ -45,7 +45,7 @@ BEGIN
 		END
 END
 GO
-ALTER PROCEDURE isEmailCorrect @vEmail varchar(50) --returns 1 for a valid email or 0 for a invalid email
+CREATE PROCEDURE isEmailCorrect @vEmail varchar(50) --returns 1 for a valid email or 0 for a invalid email
 AS
 DECLARE @isEmail BIT = 0
 BEGIN
@@ -64,7 +64,7 @@ BEGIN
 	RETURN(@isEmail)
 END
 GO
-CREATE PROCEDURE isDepartmentExist @vidD INT NOT NULL
+CREATE PROCEDURE isDepartmentExist @vidD INT
 AS
 BEGIN
 	IF((SELECT count(idDepartment) FROM Department WHERE @vidD = idDepartment)>=1)
@@ -135,7 +135,7 @@ GO
 	/*
 	Try to convert varchar to varbinary when the password is secure
 	*/
-alter PROCEDURE ispasswordCorrectFormat @vpassword VARCHAR(8000)
+CREATE PROCEDURE ispasswordCorrectFormat @vpassword VARCHAR(8000)
 AS
 BEGIN 
 	IF(len(@vpassword)>=8)--more than 8 is secure
@@ -166,6 +166,8 @@ EXEC ispasswordCorrectFormat @vpassword = 'aaaraaaaa%2'
 ------------------------------------------------------------------------------------------*/
 /*This procedure can be used by any user employee
 */
+exec CJob 'holi',1
+
 CREATE PROCEDURE CInfoEmployee @pidInfoEmployee int, @ppeopleName VARCHAR(20), @psurname VARCHAR(30), @pemail VARCHAR(50),
 @pphoneNumber INT, @pbirthDate DATE, @pemployeeAddress VARCHAR(100), @pidCountry INT
 AS 
@@ -319,12 +321,12 @@ BEGIN
 		PRINT N'Department cannot be null'
 END
 GO 
-CREATE PROCEDURE UDepartment @idUser INT, @department VARCHAR(30)
+CREATE PROCEDURE UDepartment @idUser INT, @department VARCHAR(30), @id VARCHAR(30)
 AS
 BEGIN
 	IF (@department IS NOT NULL)
 		BEGIN
-			UPDATE Department SET departmentName = @department 
+			UPDATE Department SET departmentName = @department where idDepartment = @id
 		END
 	ELSE
 		PRINT N'Department cannot be null'
@@ -333,8 +335,10 @@ END
 					 CRUD JOB
 *============================================================================*/
 go
+
+
 --we need to convert this to ONLY FOR ADMIN USERS
-CREATE PROCEDURE CJob @pjobName VARCHAR(20) NOT NULL, @pidDepartment INT NOT NULL
+CREATE PROCEDURE CJob @pjobName VARCHAR(20), @pidDepartment INT
 AS
 DECLARE @respidDepartmetExist BIT
 BEGIN 

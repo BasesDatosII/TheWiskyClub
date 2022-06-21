@@ -291,8 +291,6 @@ BEGIN
 														BEGIN
 															INSERT INTO Product (productName, cost, idProductType, image, idSupplier, idCash, isActive, entryDate, tier, productDescr)
 															VALUES (pProductName, pCost, pIdProductType, pImage, pIdSupplier, pIdCash, 1, CURRENT_DATE(), pTier, pProductDescr);
-                                                            #CREATES POPULAR PRODUCTS DATA FOR THIS PRODUCT
-															CALL CPopularProducts(LAST_INSERT_ID(), @result);
 															SET result = "The Product has been added";
 														END;
 													ELSE
@@ -891,6 +889,8 @@ BEGIN
 						BEGIN
 							IF (pStock > 0) THEN
 								BEGIN
+									#CREATES POPULAR PRODUCTS DATA FOR THIS PRODUCT
+									CALL CPopularProducts(pIdProduct, pIdClub, @result);
 									INSERT INTO Inventory (idClub, idProduct, stock, isActive) VALUES (pIdClub, pIdProduct, pStock, 1);
 									SET result = "The Inventory has been added";
 								END;
@@ -2458,7 +2458,7 @@ DELIMITER ;
 ##################################################################################################
 
 DELIMITER //
-CREATE PROCEDURE CPopularProducts (IN pIdProduct INT, OUT result VARCHAR(16383))
+CREATE PROCEDURE CPopularProducts (IN pIdProduct INT, IN pIdClub INT, OUT result VARCHAR(16383))
 BEGIN
 	#CREATING POPULAR PRODUCTS
     #CHECKING DATA TYPES AND WHAT THEY CONTAIN
@@ -2466,15 +2466,21 @@ BEGIN
 		BEGIN
 			IF ((SELECT COUNT(idProduct) FROM Product WHERE idProduct = pIdProduct) > 0) THEN
 				BEGIN
-					#CHECKS IF THE PRODUCT ALREADY HAS A POPULAR PRODUCTS ROW
-					IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) = 0) THEN
+					IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
 						BEGIN
-							INSERT INTO PopularProducts (idProduct) VALUES (pIdProduct);
-							SET result = "The Popular Product has been added";
+							#CHECKS IF THE PRODUCT ALREADY HAS A POPULAR PRODUCTS ROW
+							IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) = 0) THEN
+								BEGIN
+									INSERT INTO PopularProducts (idProduct, idClub) VALUES (pIdProduct, pIdClub);
+									SET result = "The Popular Product has been added";
+								END;
+							ELSE
+								SET result = "The Product ID specified already has a Popular Product Data for this product";
+							END IF;
 						END;
 					ELSE
-						SET result = "The Product ID specified already has a Popular Product Data for this product";
-                    END IF;
+						SET result = "The Club ID specified doesn´t exists";
+					END IF;
 				END;
 			ELSE
 				SET result = "The Popular Product ID specified doesn´t exists";
@@ -2487,17 +2493,17 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE RPopularProducts (IN pIdPopularProducts INT, IN pIdProduct INT, IN pAmount INT)
+CREATE PROCEDURE RPopularProducts (IN pIdPopularProducts INT, IN pIdProduct INT, IN pAmount INT, IN pIdClub INT)
 BEGIN
 	#READING POPULAR PRODUCTS DATABASE INFORMATION
-	SELECT idPopularProducts AS 'Popular Products ID', idProduct AS 'Product ID', amount AS 'Amount Sold'
-    FROM PopularProducts WHERE idPopularProducts = IFNULL(pIdPopularProducts, idPopularProducts)
-    AND idProduct = IFNULL(pIdProduct, idProduct) AND amount = IFNULL(pAmount, amount);
+	SELECT idPopularProducts AS 'Popular Products ID', idProduct AS 'Product ID', amount AS 'Amount Sold', idClub AS 'Club ID'
+    FROM PopularProducts WHERE idPopularProducts = IFNULL(pIdPopularProducts, idPopularProducts) AND idProduct = IFNULL(pIdProduct, idProduct)
+    AND amount = IFNULL(pAmount, amount) AND idClub = IFNULL(pIdClub, idClub);
 END //
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE UPopularProducts (IN pIdPopularProducts INT, IN pIdProduct INT, IN pAmount INT, OUT result VARCHAR(16383))
+CREATE PROCEDURE UPopularProducts (IN pIdPopularProducts INT, IN pIdProduct INT, IN pAmount INT, IN pIdClub INT, OUT result VARCHAR(16383))
 BEGIN
 	 #UPDATING POPULAR PRODUCTS DATABASE INFORMATION
 	SET result = "";
@@ -2563,6 +2569,17 @@ BEGIN
 						SET result = CONCAT('The Amount needs to be greater or equal than 0\n');
 					END IF;
 				END;
+			END IF;
+            #UPDATING CLUB ID
+			IF (pIdClub IS NOT NULL) THEN
+				BEGIN
+					IF ((SELECT COUNT(idClub) FROM Club WHERE idClub = pIdClub) > 0) THEN
+						BEGIN
+							UPDATE PopularProducts SET idClub = pIdClub WHERE idPopularProducts = pIdPopularProducts;
+							SET result = CONCAT(result, 'The Club ID has been modified\n');
+						END;
+					END IF;
+                END;
 			END IF;
             SET result = CONCAT(result, 'Changes made successfully \n');
 		END;
@@ -2699,10 +2716,10 @@ BEGIN
 														UPDATE Inventory SET stock = @ActAmount WHERE idProduct = pIdProduct AND idClub = @idClub;
                                                         #UPDATES POPULAR PRODUCT SALES
                                                         IF ((SELECT COUNT(idPopularProducts) FROM PopularProducts WHERE idProduct = pIdProduct) = 0) THEN
-															CALL CPopularProducts(pIdProduct, @result);
+															CALL CPopularProducts(pIdProduct, @idClub, @result);
 														END IF;
                                                         #UPDATES POPULAR PRODUCTS ROW FOR THIS PRODUCT
-                                                        CALL UPopularProducts(NULL, pIdProduct, pAmount, @result);
+                                                        CALL UPopularProducts(NULL, pIdProduct, pAmount, NULL, @result);
                                                         #UPDATES CLIENT SALES COUNTER
                                                         CALL UClientSalesCounter ((SELECT CU.idClientUser FROM ClientPeople CP INNER JOIN ClientUser CU
 															ON CP.idClientUser = CU.idClientUser WHERE idClientPeople = 
@@ -2737,15 +2754,6 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE ReadLine(IN pIdOrderP INT)
-BEGIN
-	#READS THE LINES OF AN SPECIFIC ORDERP ID
-	SELECT idOrderLine AS 'Order Line ID', idProduct AS 'Product ID',
-		cost AS 'Cost', amount AS 'Amount' FROM OrderLine WHERE idOrderP = pIdOrderP;
-END //
-DELIMITER ;
-
-DELIMITER //
 CREATE PROCEDURE ProductQuery (IN pIdProductType INT, IN pProductName VARCHAR(20), IN pCost DECIMAL(15,2),
 	IN pIsActive BIT, IN pIdLocation INT, IN pOrder BIT, IN pQueryType BIT)
 BEGIN
@@ -2776,19 +2784,34 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE BillQuery (IN pIdOrderP INT)
 BEGIN
+	#ORDER LINES
 	SELECT productName, amount, OL.cost, SUM(amount*OL.cost) AS 'Total Cost'
 	FROM OrderP OP INNER JOIN OrderLine OL ON OP.idOrderP = OL.idOrderP
     INNER JOIN Product P ON P.idProduct = OL.idProduct
     WHERE OP.idOrderP = pIdOrderP
 	GROUP BY productName
-UNION ALL
-SELECT NULL, NULL, NULL, SUM(amount*OL.cost)
+	UNION ALL
+	#TOTAL AMOUNT
+	SELECT NULL, NULL, NULL, SUM(amount*OL.cost) + deliveryCost
 	FROM OrderP OP INNER JOIN OrderLine OL ON OP.idOrderP = OL.idOrderP
     INNER JOIN Product P ON P.idProduct = OL.idProduct
 	WHERE OP.idOrderP = pIdOrderP;
 END //
 DELIMITER ;
 
+DELIMITER //
+CREATE PROCEDURE CountryQuery (IN pidProduct INT, IN pStock INT, IN pSales INT, IN pIdProductType INT, IN pInitDate DATE, IN pFinDate DATE)
+BEGIN
+	SELECT P.idProduct AS 'Product ID', productName AS 'Product Name', typeName AS 'Product Type', stock AS 'Stock on Inventory',
+		P.isActive AS 'Active', tier AS 'Tier', C.clubName AS 'Club Name', amount AS 'Amount of Sales', orderDate
+	FROM Product P INNER JOIN ProductType PT ON P.idProductType = PT.idProductType INNER JOIN PopularProducts PP ON P.idProduct = PP.idProduct
+    INNER JOIN Inventory I ON I.idProduct = P.idProduct INNER JOIN Club C ON I.idClub = C.idClub
+    INNER JOIN OrderP OP ON C.idClub = OP.idClub
+    WHERE P.idProduct = IFNULL(pIdProduct, P.idProduct) AND stock = IFNULL(pStock, stock) AND amount = IFNULL(pSales, amount)
+		AND P.idProductType = IFNULL(pIdProductType, P.idProductType) AND orderDate >= IFNULL(pInitDate, orderDate)
+        AND orderDate <= IFNULL(pFinDate, orderDate);
+END //
+DELIMITER ;
 
 ##################################################################################################
 #CRUD CALLS
@@ -2796,58 +2819,62 @@ DELIMITER ;
 
 #PRODUCT TYPE
 #################################################
-CALL CProductType('Tabaco', @result);
+CALL CProductType('Single Malt', @result);
 SELECT @result;
-CALL CProductType('Vodka', @result);
+CALL CProductType('Blended Scotch', @result);
+SELECT @result;
+CALL CProductType('Irish Blended Malt', @result);
+SELECT @result;
+CALL CProductType('Bourbon', @result);
+SELECT @result;
+CALL CProductType('Tennessee Whiskey', @result);
 SELECT @result;
 CALL RProductType(NULL, NULL, NULL);
-CALL UProductType(1, 'Tabaco', 1, @result);
+CALL UProductType(NULL, NULL, NULL, @result);
 SELECT @result;
-CALL DProductType(2,@result);
+CALL DProductType(NULL,@result);
 SELECT @result;
 SELECT * FROM ProductType;
 #################################################
 
 #SUPPLIER
 #################################################
-CALL CSupplier('Jackass', @result);
+CALL CSupplier('Matias Whiskeys', @result);
 SELECT @result;
-CALL CSupplier('Strong', @result);
+CALL CSupplier('The Whiskey Whiskers', @result);
 SELECT @result;
 CALL RSupplier(NULL, NULL, NULL);
-CALL USupplier(1, 'DonOmar', 1, @result);
+CALL USupplier(NULL, NULL, NULL, @result);
 SELECT @result;
-CALL DSupplier(1,@result);
+CALL DSupplier(NULL, @result);
 SELECT @result;
 SELECT * FROM Supplier;
 #################################################
 
 #CASH
 #################################################
-CALL CCash("Dolar", @result);
-SELECT @result;
-CALL CCash("Pound", @result);
+CALL CCash("DolLar", @result);
 SELECT @result;
 CALL RCash(NULL, NULL);
-CALL UCash(1, "Dollar", @result);
+CALL UCash(NULL, NULL, @result);
 SELECT @result;
-CALL DCash(2,@result);
+CALL DCash(NULL,@result);
 SELECT @result;
 SELECT * FROM Cash;
 #################################################
 
 #PRODUCT
 #################################################
-CALL CProduct("Whiskey", 2.62, 2, NULL,
-					2, 1, 1, "Is Insane", @result);
+CALL CProduct("Four Roses", 2.62, 1, NULL,
+					1, 1, 1, "Coming from Suiza", @result);
 SELECT @result;
-CALL CProduct("Beer", 1.2, 2, NULL,
-					2, 1, 2, "Is incredible", @result);
+CALL CProduct("JackDaniel's", 1.2, 2, NULL,
+					2, 1, 2, "Legendary Whiskey developed 200 years ago", @result);
 SELECT @result;
 CALL RProduct(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, NULL);
-CALL UProduct(1,"Vodka",NULL,NULL,NULL,NULL,NULL,1,NULL,NULL, NULL, @result);
+CALL UProduct(NULL, NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL, NULL, @result);
 SELECT @result;
-CALL DProduct(1,@result);
+CALL DProduct(NULL,@result);
 SELECT @result;
 SELECT * FROM Product;
 #################################################
@@ -2856,12 +2883,12 @@ SELECT * FROM Product;
 #################################################
 CALL CPresentation(1, 500, 2, @result);
 SELECT @result;
-CALL CPresentation(1, 1000, 2, @result);
+CALL CPresentation(2, 1000, 2, @result);
 SELECT @result;
 CALL RPresentation(NULL, NULL, NULL, NULL);
-CALL UPresentation(1, NULL, 1000, 1, @result);
+CALL UPresentation(NULL, NULL, NULL, NULL, @result);
 SELECT @result;
-CALL DPresentation(2,@result);
+CALL DPresentation(NULL,@result);
 SELECT @result;
 SELECT * FROM Presentation;
 #################################################
@@ -2872,12 +2899,14 @@ CALL CLocation(ST_GeomFromText('POINT(0 0)'), 1, @result);
 SELECT @result;
 CALL CLocation(ST_GeomFromText('POINT(-15 -3)'), 1, @result);
 SELECT @result;
+CALL CLocation(ST_GeomFromText('POINT(15 1)'), 1, @result);
+SELECT @result;
 CALL CLocation(ST_GeomFromText('POINT(10 12)'), 0, @result);
 SELECT @result;
 CALL RLocation(NULL, NULL, NULL);
-CALL ULocation(1, NULL, 0, 1, @result);
+CALL ULocation(NULL, NULL, NULL, NULL, @result);
 SELECT @result;
-CALL DLocation(1,@result);
+CALL DLocation(NULL,@result);
 SELECT @result;
 SELECT * FROM Location;
 #################################################
@@ -2886,10 +2915,12 @@ SELECT * FROM Location;
 #################################################
 CALL CClub("Guardians Club", 1, 2.5, 1, @result);
 SELECT @result;
-CALL CClub("Whiskeys Club", 2, 1.2, 1, @result);
+CALL CClub("Whiskers Club", 2, 1.2, 1, @result);
+SELECT @result;
+CALL CClub("Fliers Club", 3, 0.6, 1, @result);
 SELECT @result;
 CALL RClub(NULL,NULL,NULL,NULL,NULL, NULL);
-CALL UClub(1, "The Guardians Club", 2, NULL, NULL, 1, @result);
+CALL UClub(NULL, NULL, NULL, NULL, NULL, NULL, @result);
 SELECT @result;
 CALL DClub(1,@result);
 SELECT @result;
@@ -2905,9 +2936,9 @@ SELECT @result;
 CALL CInventory(2,2,30, @result);
 SELECT @result;
 CALL RInventory(NULL,NULL,NULL,NULL,NULL);
-CALL UInventory(1,NULL,NULL,30,1, @result);
+CALL UInventory(NULL,NULL,NULL,NULL,NULL, @result);
 SELECT @result;
-CALL DInventory(1,@result);
+CALL DInventory(NULL,@result);
 SELECT @result;
 SELECT * FROM Inventory;
 #################################################
@@ -2917,9 +2948,9 @@ SELECT * FROM Inventory;
 CALL CClientUser("Password", @result);
 SELECT @result;
 CALL RClientUser(NULL,NULL,NULL);
-CALL UClientUser(1,NULL,1, @result);
+CALL UClientUser(NULL,NULL,NULL, @result);
 SELECT @result;
-CALL DClientUser(1,@result);
+CALL DClientUser(NULL,@result);
 SELECT @result;
 SELECT * FROM ClientUser;
 SELECT * FROM ClientPeople;
@@ -2931,7 +2962,7 @@ SELECT * FROM ClientUser;
 CALL CInfoPeople("Daniel", "Araya Sambucci", "danielarayasambucci@gmail.com", 70145250, "2002-03-10", @result);
 SELECT @result;
 CALL RInfoPeople(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-CALL UInfoPeople(1, NULL, NULL, NULL, NULL, NULL, 1, @result);
+CALL UInfoPeople(NULL, NULL, NULL, NULL, NULL, NULL, NULL, @result);
 SELECT @result;
 CALL DInfoPeople(1,@result);
 SELECT @result;
@@ -2966,12 +2997,12 @@ SELECT * FROM Card;
 
 #CLIENTLOCATION
 #################################################
-CALL CClientLocation(1, 3, @result);
+CALL CClientLocation(1, 4, @result);
 SELECT @result;
 CALL RClientLocation(NULL, NULL, NULL);
-CALL UClientLocation(1, NULL, 2, @result);
+CALL UClientLocation(NULL, NULL, NULL, @result);
 SELECT @result;
-CALL DClientLocation(2,@result);
+CALL DClientLocation(NULL,@result);
 SELECT @result;
 SELECT * FROM ClientLocation;
 #################################################
@@ -2980,8 +3011,12 @@ SELECT * FROM ClientLocation;
 #################################################
 CALL CMembership("Tier Short Glass", 10, 5, 0, @result);
 SELECT @result;
+CALL CMembership("Tier Gleincairn", 20, 10, 20, @result);
+SELECT @result;
+CALL CMembership("Tier Master Distiller", 30, 30, 100, @result);
+SELECT @result;
 CALL RMembership(NULL, NULL, NULL, NULL, NULL, NULL);
-CALL UMembership(1, NULL, NULL, NULL, NULL, 1, @result);
+CALL UMembership(NULL, NULL, NULL, NULL, NULL, NULL, @result);
 SELECT @result;
 CALL DMembership(1,@result);
 SELECT @result;
@@ -2993,9 +3028,9 @@ SELECT * FROM Membership;
 CALL CClientMembership(1, 1, @result);
 SELECT @result;
 CALL RClientMembership(NULL, NULL, NULL);
-CALL UClientMembership(1, NULL, NULL, @result);
+CALL UClientMembership(NULL, NULL, NULL, @result);
 SELECT @result;
-CALL DClientMembership(1,@result);
+CALL DClientMembership(NULL,@result);
 SELECT @result;
 SELECT * FROM ClientMembership;
 #################################################
@@ -3014,14 +3049,12 @@ SELECT * FROM WorkerReview;
 
 #QUALIFICATION
 #################################################
-CALL CQualification(1, "I don't like him", @result);
-SELECT @result;
 CALL CQualification(1, "I like him", @result);
 SELECT @result;
 CALL RQualification(NULL, NULL, NULL);
-CALL UQualification(1, NULL, "I like him", @result);
+CALL UQualification(NULL, NULL, NULL, @result);
 SELECT @result;
-CALL DQualification(2,@result);
+CALL DQualification(NULL,@result);
 SELECT @result;
 SELECT * FROM Qualification;
 #################################################
@@ -3030,36 +3063,34 @@ SELECT * FROM Qualification;
 #################################################
 CALL CComplaint(1, "I don't like him", @result);
 SELECT @result;
-CALL CComplaint(1, "I don´t like how he talks", @result);
-SELECT @result;
 CALL RComplaint(NULL, NULL, NULL, NULL);
-CALL UComplaint(1, NULL, NULL, 0, @result);
+CALL UComplaint(NULL, NULL, NULL, NULL, @result);
 SELECT @result;
-CALL DComplaint(2,@result);
+CALL DComplaint(NULL,@result);
 SELECT @result;
 SELECT * FROM Complaint;
 #################################################
 
 #REVIEW
 #################################################
-CALL CReview(1, 4, "Insane", 1, @result);
+CALL CReview(1, 5, "Insane product, to much quality", 1, @result);
 SELECT @result;
 CALL RReview(NULL, NULL, NULL, NULL, NULL, NULL);
-CALL UReview(1, NULL, 5, NULL, NULL, NULL, @result);
+CALL UReview(NULL, NULL, NULL, NULL, NULL, NULL, @result);
 SELECT @result;
-CALL DReview(1,@result);
+CALL DReview(NULL,@result);
 SELECT @result;
 SELECT * FROM Review;
 #################################################
 
 #POPULARPRODUCTS
 #################################################
-CALL CPopularProducts(2, @result);
+CALL CPopularProducts(2, 1, @result);
 SELECT @result;
-CALL RPopularProducts(NULL, NULL, NULL);
-CALL UPopularProducts(1, NULL, 0, @result);
+CALL RPopularProducts(NULL, NULL, NULL, NULL);
+CALL UPopularProducts(NULL, NULL, NULL, NULL, @result);
 SELECT @result;
-CALL DPopularProducts(3,@result);
+CALL DPopularProducts(NULL,@result);
 SELECT @result;
 SELECT * FROM PopularProducts;
 #################################################
@@ -3072,6 +3103,8 @@ SELECT * FROM PopularProducts;
 #################################################
 CALL OpenOrder(1, 1, 1, 1, 2, @result);
 SELECT @result;
+CALL OpenOrder(1, 1, 2, 1, 2, @result);
+SELECT @result;
 SELECT * FROM OrderP;
 #################################################
 
@@ -3081,12 +3114,9 @@ CALL BuyProduct(1, 1, 2, @result);
 SELECT @result;
 CALL BuyProduct(1, 2, 6, @result);
 SELECT @result;
+CALL BuyProduct(2, 2, 6, @result);
+SELECT @result;
 SELECT * FROM OrderLine;
-#################################################
-
-#READLINE
-#################################################
-CALL ReadLine(1);
 #################################################
 
 #CALCULATEDELIVERYC
@@ -3096,14 +3126,19 @@ CALL CalculateDeliveryC(1, 1, 1);
 
 #PRODUCT QUERY
 #################################################
-CALL ProductQuery(NULL, NULL, NULL, NULL, 2, NULL, NULL);
+CALL ProductQuery(NULL, NULL, NULL, NULL, 2, 1, 1);
 #################################################
 
 #BILL QUERY
 #################################################
 CALL BillQuery(1);
+CALL BillQuery(2);
 #################################################
 
+#COUNTRY QUERY
+#################################################
+CALL CountryQuery(NULL, NULL, NULL, NULL, NULL, NULL);
+#################################################
 
 ##TEMPLATE
 
@@ -3111,40 +3146,40 @@ CALL BillQuery(1);
 # CRUD 
 ##################################################################################################
 
-DELIMITER //
-CREATE PROCEDURE C (, OUT result VARCHAR(16383))
-BEGIN
-END //
-DELIMITER ;
+#DELIMITER //
+#CREATE PROCEDURE C (, OUT result VARCHAR(16383))
+#BEGIN
+#END //
+#DELIMITER ;
 
-DELIMITER //
-CREATE PROCEDURE R ()
-BEGIN
-END //
-DELIMITER ;
+#DELIMITER //
+#CREATE PROCEDURE R ()
+#BEGIN
+#END //
+#DELIMITER ;
 
-DELIMITER //
-CREATE PROCEDURE U (, OUT result VARCHAR(16383))
-BEGIN
-END //
-DELIMITER ;
+#DELIMITER //
+#CREATE PROCEDURE U (, OUT result VARCHAR(16383))
+#BEGIN
+#END //
+#DELIMITER ;
 
-DELIMITER //
-CREATE PROCEDURE D (, OUT result VARCHAR(16383))
-BEGIN
-END //
-DELIMITER ;
+#DELIMITER //
+#CREATE PROCEDURE D (, OUT result VARCHAR(16383))
+#BEGIN
+#END //
+#DELIMITER ;
 
 #
 #################################################
-CALL C(, @result);
-SELECT @result;
-CALL R();
-CALL U(, @result);
-SELECT @result;
-CALL D(,@result);
-SELECT @result;
-SELECT * FROM ;
+#CALL C(, @result);
+#SELECT @result;
+#CALL R();
+#CALL U(, @result);
+#SELECT @result;
+#CALL D(,@result);
+#SELECT @result;
+#SELECT * FROM ;
 #################################################
 
 

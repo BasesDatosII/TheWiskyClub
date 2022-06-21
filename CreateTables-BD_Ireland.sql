@@ -89,7 +89,10 @@ CREATE TABLE PopularProducts
     idProduct INT NOT NULL,
     CONSTRAINT fk_PopularProductsProduct FOREIGN KEY(idProduct)
     REFERENCES Product(idProduct),
-    amount INT NOT NULL DEFAULT 0
+    amount INT NOT NULL DEFAULT 0,
+    idClub INT NOT NULL,
+    CONSTRAINT fk_PopularProductsClub FOREIGN KEY(idClub)
+    REFERENCES Club(idClub)
 );
 
 CREATE TABLE Inventory

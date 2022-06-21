@@ -741,6 +741,24 @@ END
 GO
 
 
+
+
+CREATE PROCEDURE CountryQuery @idCountry INT
+AS
+BEGIN
+	IF (@idCountry IS NOT NULL)
+		BEGIN
+			IF (@idCountry = 1)
+				EXEC ('CALL CountryQuery (NULL, NULL, NULL, NULL, NULL, NULL);') AT LS_WUNITEDSTATES
+			ELSE IF (@idCountry = 2)
+				EXEC ('CALL CountryQuery (NULL, NULL, NULL, NULL, NULL, NULL);') AT LS_WSCOTLAND
+			ELSE IF (@idCountry = 3)
+				EXEC ('CALL CountryQuery (NULL, NULL, NULL, NULL, NULL, NULL);') AT LS_WIRELAND
+		END
+END
+
+
+
 /*============================================================================
 					 CRUD CALLS
 *============================================================================*/
@@ -766,6 +784,8 @@ INSERT INTO EmployeeUser (idEmployeeUser, pasword, isActive) VALUES (1, CONVERT(
 INSERT INTO Employee (idEmployee, idInfoEmployee, isActive, salary, idJob, idEmployeeUser, idCashClub, calification) VALUES (1, 1, 1, 500000, 1, 1, 1, 4.6)
 
 EXEC Payroll
+
+EXEC CountryQuery @idCountry = 1
 
 
 SELECT * FROM CashClub
